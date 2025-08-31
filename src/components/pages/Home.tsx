@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useSubjectQuery } from '../../api/queries/subject.query';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
+import { toast } from 'react-hot-toast';
 
 // Simulação de API
 const fetchUsers = async (): Promise<{ id: number; name: string; email: string }[]> => {
@@ -147,7 +148,7 @@ export function Home() {
           
           {subjectError && (
             <div className="mt-4 bg-red-50 border border-red-200 rounded-md p-4">
-              <p className="text-red-800">Erro ao carregar matéria: {subjectError.message}</p>
+              <p className="text-red-800">Erro ao carregar matéria: {toast.error("Desculpe. Mas aparentemente não conseguimos encontrar a matéria que você está procurando.")}</p>
             </div>
           )}
           
