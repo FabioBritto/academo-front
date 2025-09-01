@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import academoLogo from '../../assets/academo-logo.jpeg';
+import { Outlet } from '@tanstack/react-router';
 
 const Landing: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -48,92 +49,8 @@ const Landing: React.FC = () => {
   };
 
   return (
+    
     <div className="font-sans antialiased text-gray-800">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white shadow-md">
-        <div className="container mx-auto px-4 py-4 flex flex-col md:flex-row justify-center md:justify-between items-center">
-          {/* Logo centralizado */}
-          <div className="flex items-center mb-4 md:mb-0">
-            <img 
-              src={academoLogo} 
-              alt="Academo Logo" 
-              className="w-20 h-20 rounded-full object-cover mr-4"
-            />
-            <span className="text-3xl font-bold text-indigo-600">Academo</span>
-          </div>
-          
-          {/* Navegação */}
-          <nav className="hidden md:flex space-x-8 mb-4 md:mb-0">
-            <button 
-              onClick={() => scrollToSection('hero')}
-              className="text-indigo-600 font-medium"
-            >
-              Início
-            </button>
-            <button 
-              onClick={() => scrollToSection('features')}
-              className="text-gray-600 hover:text-indigo-600 transition"
-            >
-              Funcionalidades
-            </button>
-            <button 
-              onClick={() => scrollToSection('testimonials')}
-              className="text-gray-600 hover:text-indigo-600 transition"
-            >
-              Depoimentos
-            </button>
-            <button className="text-gray-600 hover:text-indigo-600 transition">
-              Contato
-            </button>
-          </nav>
-          
-          {/* Botão CTA */}
-          <button className="hidden md:block bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium transition duration-300">
-            Crie sua Conta Grátis
-          </button>
-          
-          {/* Menu mobile */}
-          <button 
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden text-gray-600 absolute top-4 right-4"
-          >
-            <i className="fas fa-bars text-2xl"></i>
-          </button>
-        </div>
-        
-        {/* Mobile menu */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden bg-white py-4 px-4 shadow-lg">
-            <div className="flex flex-col space-y-4">
-              <button 
-                onClick={() => scrollToSection('hero')}
-                className="text-indigo-600 font-medium text-left"
-              >
-                Início
-              </button>
-              <button 
-                onClick={() => scrollToSection('features')}
-                className="text-gray-600 hover:text-indigo-600 transition text-left"
-              >
-                Funcionalidades
-              </button>
-              <button 
-                onClick={() => scrollToSection('testimonials')}
-                className="text-gray-600 hover:text-indigo-600 transition text-left"
-              >
-                Depoimentos
-              </button>
-              <button className="text-gray-600 hover:text-indigo-600 transition text-left">
-                Contato
-              </button>
-              <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium transition duration-300 w-full">
-                Crie sua Conta Grátis
-              </button>
-            </div>
-          </div>
-        )}
-      </header>
-
       {/* Hero Section */}
       <section id="hero" className="bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-800 text-white">
         <div className="container mx-auto px-4 py-16 md:py-24 relative">
