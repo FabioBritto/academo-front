@@ -1,3 +1,5 @@
+import api from "..";
+
 export interface User {
     id: number;
     name: string;
@@ -19,4 +21,11 @@ export interface UpdateUserDTO {
     email?: string;
     password?: string;
     isActive?: boolean;
+}
+
+export const usersApi = {
+    createUser: async (payload: CreateUserDTO) => {
+        const response = await api.post<User>("/auth/register", payload);
+        return response.data;
+    }
 }

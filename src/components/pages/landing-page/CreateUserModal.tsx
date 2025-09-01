@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useUserMutations } from '../../../api/mutations/user';
+import { toast } from 'sonner'
 
 interface CreateUserModalProps {
   isOpen: boolean;
@@ -8,12 +10,14 @@ interface CreateUserModalProps {
 
 export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalProps) {
   const [formData, setFormData] = useState({
+    name: '',
     email: '',
     password: '',
     confirmPassword: ''
   });
   
   const [errors, setErrors] = useState({
+    name: '',
     email: '',
     password: '',
     confirmPassword: ''
@@ -22,12 +26,15 @@ export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalPro
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const { useCreateUserMutation } = useUserMutations();
+  const createUserMutation = useCreateUserMutation();
 
   const validateForm = () => {
     const newErrors = {
+      name: '',
       email: '',
       password: '',
-      confirmPassword: ''
+      confirmPassword: '',
     };
 
     // Validação de email
@@ -65,26 +72,22 @@ export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalPro
     setIsLoading(true);
     
     try {
-      // Aqui você implementaria a chamada para a API
-      console.log('Dados do formulário:', formData);
+      const createUserDTO = {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+      };
+      await createUserMutation.mutateAsync(createUserDTO);
+      toast.success('Usuário criado com sucesso!');
       
-      // Simular delay da API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Sucesso - fechar modal e limpar formulário
       onClose();
-      setFormData({ email: '', password: '', confirmPassword: '' });
-      setErrors({ email: '', password: '', confirmPassword: '' });
+      setFormData({ name: '', email: '', password: '', confirmPassword: '' });
+      setErrors({ name: '', email: '', password: '', confirmPassword: '' });
       setShowPassword(false);
       setShowConfirmPassword(false);
-      
-      // Aqui você poderia mostrar uma mensagem de sucesso
-      alert('Usuário criado com sucesso!');
-      
     } catch (error) {
       console.error('Erro ao criar usuário:', error);
-      // Aqui você poderia mostrar uma mensagem de erro
-      alert('Erro ao criar usuário. Tente novamente.');
+      toast.error(error as string);
     } finally {
       setIsLoading(false);
     }
@@ -94,7 +97,6 @@ export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalPro
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     
-    // Limpar erro do campo quando o usuário começar a digitar
     if (errors[name as keyof typeof errors]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -103,16 +105,16 @@ export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalPro
   const handleClose = () => {
     if (!isLoading) {
       onClose();
-      setFormData({ email: '', password: '', confirmPassword: '' });
-      setErrors({ email: '', password: '', confirmPassword: '' });
+      setFormData({ name: '', email: '', password: '', confirmPassword: '' });
+      setErrors({ name: '', email: '', password: '', confirmPassword: '' });
       setShowPassword(false);
       setShowConfirmPassword(false);
     }
   };
 
   const handleLogin = () => {
-    onClose(); // Fecha o modal de criação de conta
-    onLogin(); // Abre o modal de login
+    onClose();
+    onLogin();
   };
 
   if (!isOpen) return null;
@@ -151,6 +153,27 @@ export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalPro
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="px-6 py-6">
+
+            <div className="mb-4">
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                Nome
+              </label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-academo-brown focus:border-academo-brown ${
+                  errors.name ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="Nome"
+                disabled={isLoading}
+              />
+              {errors.name && (
+                <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+              )}
+            </div>
             {/* Email */}
             <div className="mb-4">
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">

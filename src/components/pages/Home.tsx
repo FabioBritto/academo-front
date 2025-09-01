@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useSubjectQuery } from '../../api/queries/subject.query';
+import { useSubjectQuery } from '../../api/queries/subject';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { toast } from 'react-hot-toast';
