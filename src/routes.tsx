@@ -1,5 +1,5 @@
 import { createRouter, createRoute, createRootRoute } from '@tanstack/react-router';
-import Landing from './components/pages/Landing';
+import Landing from './components/pages/landing-page/Landing';
 import { Home } from './components/pages/Home';
 import { About } from './components/pages/About';
 import { HeaderLanding } from './components/HeaderLanding';
