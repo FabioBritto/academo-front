@@ -1,33 +1,29 @@
 import React, { useState } from 'react';
 
-interface CreateUserModalProps {
+interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onLogin: () => void;
+  onCreateAccount: () => void;
 }
 
-export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalProps) {
+export function LoginModal({ isOpen, onClose, onCreateAccount }: LoginModalProps) {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    confirmPassword: ''
   });
   
   const [errors, setErrors] = useState({
     email: '',
     password: '',
-    confirmPassword: ''
   });
   
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const validateForm = () => {
     const newErrors = {
       email: '',
       password: '',
-      confirmPassword: ''
     };
 
     // Validação de email
@@ -42,13 +38,6 @@ export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalPro
       newErrors.password = 'Senha é obrigatória';
     } else if (formData.password.length < 6) {
       newErrors.password = 'Senha deve ter pelo menos 6 caracteres';
-    }
-
-    // Validação de confirmação de senha
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = 'Confirmação de senha é obrigatória';
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Senhas não coincidem';
     }
 
     setErrors(newErrors);
@@ -73,18 +62,17 @@ export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalPro
       
       // Sucesso - fechar modal e limpar formulário
       onClose();
-      setFormData({ email: '', password: '', confirmPassword: '' });
-      setErrors({ email: '', password: '', confirmPassword: '' });
+      setFormData({ email: '', password: '' });
+      setErrors({ email: '', password: '' });
       setShowPassword(false);
-      setShowConfirmPassword(false);
       
       // Aqui você poderia mostrar uma mensagem de sucesso
-      alert('Usuário criado com sucesso!');
+      alert('Login realizado com sucesso!');
       
     } catch (error) {
-      console.error('Erro ao criar usuário:', error);
+      console.error('Erro ao fazer login:', error);
       // Aqui você poderia mostrar uma mensagem de erro
-      alert('Erro ao criar usuário. Tente novamente.');
+      alert('Erro ao fazer login. Tente novamente.');
     } finally {
       setIsLoading(false);
     }
@@ -103,16 +91,15 @@ export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalPro
   const handleClose = () => {
     if (!isLoading) {
       onClose();
-      setFormData({ email: '', password: '', confirmPassword: '' });
-      setErrors({ email: '', password: '', confirmPassword: '' });
+      setFormData({ email: '', password: '' });
+      setErrors({ email: '', password: '' });
       setShowPassword(false);
-      setShowConfirmPassword(false);
     }
   };
 
-  const handleLogin = () => {
-    onClose(); // Fecha o modal de criação de conta
-    onLogin(); // Abre o modal de login
+  const handleCreateAccount = () => {
+    onClose(); // Fecha o modal de login
+    onCreateAccount(); // Abre o modal de criação de conta
   };
 
   if (!isOpen) return null;
@@ -132,7 +119,7 @@ export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalPro
           <div className="bg-academo-brown px-6 py-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-white">
-                Criar Nova Conta
+                Entrar
               </h3>
               <button
                 onClick={handleClose}
@@ -144,8 +131,8 @@ export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalPro
                 </svg>
               </button>
             </div>
-            <p className="text-indigo-100 text-sm mt-1">
-              Preencha os dados abaixo para criar sua conta
+            <p className="text-academo-cream text-sm mt-1">
+              Preencha os dados abaixo para fazer login
             </p>
           </div>
 
@@ -174,7 +161,7 @@ export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalPro
             </div>
 
             {/* Senha */}
-            <div className="mb-4">
+            <div className="mb-6">
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 Senha
               </label>
@@ -214,54 +201,13 @@ export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalPro
               )}
             </div>
 
-            {/* Confirmação de Senha */}
-            <div className="mb-6">
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                Confirmar Senha
-              </label>
-              <div className="relative">
-                <input
-                  type={showConfirmPassword ? "text" : "password"}
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleInputChange}
-                  className={`w-full pr-10 px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-academo-brown focus:border-academo-brown ${
-                    errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  placeholder="••••••••"
-                  disabled={isLoading}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-academo-brown transition-colors"
-                  disabled={isLoading}
-                >
-                  {showConfirmPassword ? (
-                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                    </svg>
-                  ) : (
-                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  )}
-                </button>
-              </div>
-              {errors.confirmPassword && (
-                <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>
-              )}
-            </div>
-
             {/* Botões */}
             <div className="flex space-x-3">
               <button
                 type="button"
                 onClick={handleClose}
                 disabled={isLoading}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-academo-brown disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Cancelar
               </button>
@@ -276,10 +222,10 @@ export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalPro
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Criando...
+                    Fazendo login...
                   </div>
                 ) : (
-                  'Criar Conta'
+                  'Fazer Login'
                 )}
               </button>
             </div>
@@ -287,27 +233,15 @@ export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalPro
 
           {/* Footer */}
           <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
-            <div className="space-y-3">
             <p className="text-xs text-gray-500 text-center">
-                Já tem uma conta?{' '}
-                <button 
-                  onClick={handleLogin}
-                  className="text-academo-brown hover:text-academo-sage underline"
-                >
-                  Entrar
-                </button>
-              </p>
-              <p className="text-xs text-gray-500 text-center">
-                Ao criar uma conta, você concorda com nossos{' '}
-                <a href="#" className="text-academo-brown hover:text-academo-sage">
-                  Termos de Serviço
-                </a>{' '}
-                e{' '}
-                <a href="#" className="text-academo-brown hover:text-academo-sage">
-                  Política de Privacidade
-                </a>
-              </p>
-            </div>
+              Não tem uma conta?{' '}
+              <button 
+                onClick={handleCreateAccount}
+                className="text-academo-brown hover:text-academo-sage underline"
+              >
+                Criar conta
+              </button>
+            </p>
           </div>
         </div>
       </div>

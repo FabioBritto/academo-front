@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import academoLogo from '../../../assets/academo-logo.jpeg';
 import { CreateUserModal } from './CreateUserModal';
+import { LoginModal } from './LoginModal';
 
 const Landing: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
-
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const slides = [
     {
       title: "Nunca mais perca um prazo",
@@ -365,6 +366,13 @@ const Landing: React.FC = () => {
       <CreateUserModal 
         isOpen={isCreateUserModalOpen}
         onClose={() => setIsCreateUserModalOpen(false)}
+        onLogin={() => setIsLoginModalOpen(true)}
+      />
+
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onCreateAccount={() => setIsCreateUserModalOpen(true)}
       />
     </div>
   );

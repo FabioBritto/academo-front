@@ -2,11 +2,13 @@ import { Link, Outlet } from '@tanstack/react-router';
 import academoLogo from '../assets/academo-logo.jpeg'
 import { useState } from 'react';
 import { CreateUserModal } from './pages/landing-page/CreateUserModal';
+import { LoginModal } from './pages/landing-page/LoginModal';
 
 export function HeaderLanding() {
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -18,6 +20,10 @@ export function HeaderLanding() {
 
   const openCreateUserModal = () => {
     setIsCreateUserModalOpen(true);
+  };
+
+  const openLoginModal = () => {
+    setIsLoginModalOpen(true);
   };
 
 
@@ -56,15 +62,24 @@ export function HeaderLanding() {
               Contato
             </button>
           </nav>
-          
-          {/* Botão CTA */}
-          <button 
-            onClick={openCreateUserModal}
-            className="hidden md:block bg-academo-brown hover:bg-academo-sage text-white px-6 py-2 rounded-lg font-medium transition duration-300"
-          >
-            Crie sua Conta Grátis
-          </button>
-          
+
+          {/* Botões de Ação */}
+          <div className="hidden md:flex items-center space-x-3">
+            <button
+              onClick={openLoginModal}
+              className="bg-academo-brown hover:bg-academo-sage text-white px-6 py-2 rounded-lg font-medium transition duration-300"
+            >
+              Entrar
+            </button>
+            
+            <button 
+              onClick={openCreateUserModal}
+              className="bg-academo-brown hover:bg-academo-sage text-white px-6 py-2 rounded-lg font-medium transition duration-300"
+            >
+              Crie sua Conta Grátis
+            </button>
+          </div>
+
           {/* Menu mobile */}
           <button 
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -100,6 +115,12 @@ export function HeaderLanding() {
                 Contato
               </button>
               <button 
+                onClick={openLoginModal}
+                className="bg-academo-brown hover:bg-academo-sage text-white px-6 py-2 rounded-lg font-medium transition duration-300 w-full"
+              >
+                Entrar
+              </button>
+              <button 
                 onClick={openCreateUserModal}
                 className="bg-academo-brown hover:bg-academo-sage text-white px-6 py-2 rounded-lg font-medium transition duration-300 w-full"
               >
@@ -116,6 +137,13 @@ export function HeaderLanding() {
       <CreateUserModal 
         isOpen={isCreateUserModalOpen}
         onClose={() => setIsCreateUserModalOpen(false)}
+        onLogin={openLoginModal}
+      />
+
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onCreateAccount={openCreateUserModal}
       />
     </div>
   )
