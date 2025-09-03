@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useUserMutations } from '../../../api/mutations/user';
+import { useNavigate } from '@tanstack/react-router';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -7,6 +9,7 @@ interface LoginModalProps {
 }
 
 export function LoginModal({ isOpen, onClose, onCreateAccount }: LoginModalProps) {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -19,6 +22,8 @@ export function LoginModal({ isOpen, onClose, onCreateAccount }: LoginModalProps
   
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const { useLoginMutation } = useUserMutations();
+  const loginMutation = useLoginMutation();
 
   const validateForm = () => {
     const newErrors = {
@@ -54,24 +59,18 @@ export function LoginModal({ isOpen, onClose, onCreateAccount }: LoginModalProps
     setIsLoading(true);
     
     try {
-      // Aqui você implementaria a chamada para a API
-      console.log('Dados do formulário:', formData);
+      await loginMutation.mutateAsync({ username: formData.email, password: formData.password });
       
-      // Simular delay da API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Sucesso - fechar modal e limpar formulário
       onClose();
       setFormData({ email: '', password: '' });
       setErrors({ email: '', password: '' });
       setShowPassword(false);
       
-      // Aqui você poderia mostrar uma mensagem de sucesso
       alert('Login realizado com sucesso!');
+      navigate({ to: '/app/home'});
       
     } catch (error) {
       console.error('Erro ao fazer login:', error);
-      // Aqui você poderia mostrar uma mensagem de erro
       alert('Erro ao fazer login. Tente novamente.');
     } finally {
       setIsLoading(false);
@@ -82,7 +81,6 @@ export function LoginModal({ isOpen, onClose, onCreateAccount }: LoginModalProps
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     
-    // Limpar erro do campo quando o usuário começar a digitar
     if (errors[name as keyof typeof errors]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -98,8 +96,8 @@ export function LoginModal({ isOpen, onClose, onCreateAccount }: LoginModalProps
   };
 
   const handleCreateAccount = () => {
-    onClose(); // Fecha o modal de login
-    onCreateAccount(); // Abre o modal de criação de conta
+    onClose();
+    onCreateAccount();
   };
 
   if (!isOpen) return null;

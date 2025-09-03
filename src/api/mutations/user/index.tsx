@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import type { CreateUserDTO } from "../../types/user";
+import type { CreateUserDTO, LoginDTO } from "../../types/user";
 import { usersApi } from "../../types/user";
 
 export const useUserMutations = () => {
@@ -20,7 +20,22 @@ export const useUserMutations = () => {
         })
     }
 
+    const useLoginMutation = () => {
+        return useMutation({
+            mutationFn: async (payload: LoginDTO) => {
+                return (await usersApi.login(payload));
+            },
+            onSuccess: () => {
+                queryClient.invalidateQueries({ queryKey: ["user"] });
+            },
+            onError: (error) => {
+                return `Não foi possível fazer login: ${error.message}`;
+            }
+        })
+    }
+
     return {
         useCreateUserMutation,
+        useLoginMutation
     }
 }

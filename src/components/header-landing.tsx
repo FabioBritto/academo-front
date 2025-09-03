@@ -1,11 +1,11 @@
-import { Link, Outlet } from '@tanstack/react-router';
+import { Link, Outlet, useNavigate } from '@tanstack/react-router';
 import academoLogo from '../assets/academo-logo.jpeg'
 import { useState } from 'react';
 import { CreateUserModal } from './pages/landing-page/CreateUserModal';
 import { LoginModal } from './pages/landing-page/LoginModal';
 
 export function HeaderLanding() {
-
+  const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -77,6 +77,14 @@ export function HeaderLanding() {
               className="bg-academo-brown hover:bg-academo-sage text-white px-6 py-2 rounded-lg font-medium transition duration-300"
             >
               Crie sua Conta Grátis
+            </button>
+            
+            {/* Link para desenvolvimento - remover em produção */}
+            <button 
+              onClick={() => navigate({ to: '/app/home' })}
+              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition duration-300"
+            >
+              Área Logada (Dev)
             </button>
           </div>
 

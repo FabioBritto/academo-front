@@ -148,7 +148,7 @@ export function Home() {
           
           {subjectError && (
             <div className="mt-4 bg-red-50 border border-red-200 rounded-md p-4">
-              <p className="text-red-800">Erro ao carregar matéria: {toast.error("Desculpe. Mas aparentemente não conseguimos encontrar a matéria que você está procurando.")}</p>
+              <p className="text-red-800">Erro ao carregar matéria: Desculpe. Mas aparentemente não conseguimos encontrar a matéria que você está procurando.</p>
             </div>
           )}
           
