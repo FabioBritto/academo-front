@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import academoLogo from '../../assets/academo-logo.jpeg';
+import academoLogo from '../../../assets/academo-logo.jpeg';
+import { CreateUserModal } from './CreateUserModal';
+import { LoginModal } from './LoginModal';
 
 const Landing: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
+  const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const slides = [
     {
       title: "Nunca mais perca um prazo",
@@ -47,95 +50,15 @@ const Landing: React.FC = () => {
     setIsMobileMenuOpen(false);
   };
 
-  return (
-    <div className="font-sans antialiased text-gray-800">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white shadow-md">
-        <div className="container mx-auto px-4 py-4 flex flex-col md:flex-row justify-center md:justify-between items-center">
-          {/* Logo centralizado */}
-          <div className="flex items-center mb-4 md:mb-0">
-            <img 
-              src={academoLogo} 
-              alt="Academo Logo" 
-              className="w-20 h-20 rounded-full object-cover mr-4"
-            />
-            <span className="text-3xl font-bold text-indigo-600">Academo</span>
-          </div>
-          
-          {/* Navegação */}
-          <nav className="hidden md:flex space-x-8 mb-4 md:mb-0">
-            <button 
-              onClick={() => scrollToSection('hero')}
-              className="text-indigo-600 font-medium"
-            >
-              Início
-            </button>
-            <button 
-              onClick={() => scrollToSection('features')}
-              className="text-gray-600 hover:text-indigo-600 transition"
-            >
-              Funcionalidades
-            </button>
-            <button 
-              onClick={() => scrollToSection('testimonials')}
-              className="text-gray-600 hover:text-indigo-600 transition"
-            >
-              Depoimentos
-            </button>
-            <button className="text-gray-600 hover:text-indigo-600 transition">
-              Contato
-            </button>
-          </nav>
-          
-          {/* Botão CTA */}
-          <button className="hidden md:block bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium transition duration-300">
-            Crie sua Conta Grátis
-          </button>
-          
-          {/* Menu mobile */}
-          <button 
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden text-gray-600 absolute top-4 right-4"
-          >
-            <i className="fas fa-bars text-2xl"></i>
-          </button>
-        </div>
-        
-        {/* Mobile menu */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden bg-white py-4 px-4 shadow-lg">
-            <div className="flex flex-col space-y-4">
-              <button 
-                onClick={() => scrollToSection('hero')}
-                className="text-indigo-600 font-medium text-left"
-              >
-                Início
-              </button>
-              <button 
-                onClick={() => scrollToSection('features')}
-                className="text-gray-600 hover:text-indigo-600 transition text-left"
-              >
-                Funcionalidades
-              </button>
-              <button 
-                onClick={() => scrollToSection('testimonials')}
-                className="text-gray-600 hover:text-indigo-600 transition text-left"
-              >
-                Depoimentos
-              </button>
-              <button className="text-gray-600 hover:text-indigo-600 transition text-left">
-                Contato
-              </button>
-              <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium transition duration-300 w-full">
-                Crie sua Conta Grátis
-              </button>
-            </div>
-          </div>
-        )}
-      </header>
+  const openCreateUserModal = () => {
+    setIsCreateUserModalOpen(true);
+  };
 
+  return (
+    
+    <div className="font-sans antialiased text-gray-800">
       {/* Hero Section */}
-      <section id="hero" className="bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-800 text-white">
+      <section id="hero" className="bg-gradient-to-br from-academo-brown via-academo-sage to-academo-brown text-white">
         <div className="container mx-auto px-4 py-16 md:py-24 relative">
           <div className="max-w-3xl mx-auto text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold mb-6">
@@ -145,10 +68,13 @@ const Landing: React.FC = () => {
               Concentre-se no que realmente importa: seus estudos. Deixe que a nossa plataforma cuide da organização para você.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <button className="bg-white text-indigo-600 hover:bg-gray-100 px-8 py-3 rounded-lg font-bold text-lg transition duration-300">
+              <button 
+                onClick={openCreateUserModal}
+                className="bg-academo-cream text-academo-brown hover:bg-white px-8 py-3 rounded-lg font-bold text-lg transition duration-300"
+              >
                 Comece a se Organizar Agora
               </button>
-              <button className="border-2 border-white text-white hover:bg-white hover:text-indigo-600 px-8 py-3 rounded-lg font-bold text-lg transition duration-300">
+              <button className="border-2 border-white text-white hover:bg-academo-cream hover:text-academo-brown px-8 py-3 rounded-lg font-bold text-lg transition duration-300">
                 Veja como Funciona
               </button>
             </div>
@@ -206,9 +132,9 @@ const Landing: React.FC = () => {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {/* Feature 1 */}
             <div className="bg-white p-8 rounded-xl shadow-md transition duration-300 hover:transform hover:-translate-y-2 hover:shadow-xl">
-              <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-6">
-                <i className="fas fa-calendar text-indigo-600 text-2xl"></i>
-              </div>
+                          <div className="w-16 h-16 bg-academo-peach rounded-full flex items-center justify-center mb-6">
+              <i className="fas fa-calendar text-academo-brown text-2xl"></i>
+            </div>
               <h3 className="text-xl font-bold mb-3">Agendamento Inteligente</h3>
               <p className="text-gray-600">
                 Crie seu cronograma de aulas, defina datas de provas e entregas de trabalhos. Visualize tudo em um calendário intuitivo e personalizável.
@@ -217,9 +143,9 @@ const Landing: React.FC = () => {
             
             {/* Feature 2 */}
             <div className="bg-white p-8 rounded-xl shadow-md transition duration-300 hover:transform hover:-translate-y-2 hover:shadow-xl">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-6">
-                <i className="fas fa-bell text-green-600 text-2xl"></i>
-              </div>
+                          <div className="w-16 h-16 bg-academo-sage rounded-full flex items-center justify-center mb-6">
+              <i className="fas fa-bell text-academo-brown text-2xl"></i>
+            </div>
               <h3 className="text-xl font-bold mb-3">Notificações Automáticas</h3>
               <p className="text-gray-600">
                 Configure alertas e receba lembretes por email sobre seus próximos compromissos acadêmicos, garantindo que você esteja sempre preparado.
@@ -228,9 +154,9 @@ const Landing: React.FC = () => {
             
             {/* Feature 3 */}
             <div className="bg-white p-8 rounded-xl shadow-md transition duration-300 hover:transform hover:-translate-y-2 hover:shadow-xl">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-6">
-                <i className="fas fa-cloud-upload-alt text-blue-600 text-2xl"></i>
-              </div>
+                          <div className="w-16 h-16 bg-academo-cream rounded-full flex items-center justify-center mb-6">
+              <i className="fas fa-cloud-upload-alt text-academo-brown text-2xl"></i>
+            </div>
               <h3 className="text-xl font-bold mb-3">Repositório de Arquivos</h3>
               <p className="text-gray-600">
                 Guarde todos os seus materiais de estudo, trabalhos e anotações em um só lugar. Acesse de qualquer dispositivo, a qualquer momento.
@@ -239,9 +165,9 @@ const Landing: React.FC = () => {
             
             {/* Feature 4 */}
             <div className="bg-white p-8 rounded-xl shadow-md transition duration-300 hover:transform hover:-translate-y-2 hover:shadow-xl">
-              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-6">
-                <i className="fas fa-chart-line text-purple-600 text-2xl"></i>
-              </div>
+                          <div className="w-16 h-16 bg-academo-peach rounded-full flex items-center justify-center mb-6">
+              <i className="fas fa-chart-line text-academo-brown text-2xl"></i>
+            </div>
               <h3 className="text-xl font-bold mb-3">Gerenciamento de Notas</h3>
               <p className="text-gray-600">
                 Registre suas notas por matéria, calcule médias e tenha uma visão completa do seu rendimento. Identifique pontos de melhoria e foque nos seus objetivos.
@@ -267,9 +193,9 @@ const Landing: React.FC = () => {
             {/* Testimonial 1 */}
             <div className="bg-gray-50 p-8 rounded-xl shadow-sm hover:shadow-md transition duration-300 hover:scale-105">
               <div className="flex items-center mb-4">
-                <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center mr-4">
-                  <i className="fas fa-user text-indigo-600"></i>
-                </div>
+                        <div className="w-12 h-12 rounded-full bg-academo-peach flex items-center justify-center mr-4">
+          <i className="fas fa-user text-academo-brown"></i>
+        </div>
                 <div>
                   <h4 className="font-bold">Ana Clara</h4>
                   <p className="text-gray-600 text-sm">Engenharia Civil, UFMG</p>
@@ -290,9 +216,9 @@ const Landing: React.FC = () => {
             {/* Testimonial 2 */}
             <div className="bg-gray-50 p-8 rounded-xl shadow-sm hover:shadow-md transition duration-300 hover:scale-105">
               <div className="flex items-center mb-4">
-                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mr-4">
-                  <i className="fas fa-user text-green-600"></i>
-                </div>
+                        <div className="w-12 h-12 rounded-full bg-academo-sage flex items-center justify-center mr-4">
+          <i className="fas fa-user text-academo-brown"></i>
+        </div>
                 <div>
                   <h4 className="font-bold">Pedro Henrique</h4>
                   <p className="text-gray-600 text-sm">Medicina, USP</p>
@@ -314,7 +240,7 @@ const Landing: React.FC = () => {
       </section>
 
       {/* Final CTA Section */}
-      <section className="py-16 md:py-24 bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
+      <section className="py-16 md:py-24 bg-gradient-to-r from-academo-brown to-academo-sage text-white">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
             Pronto para transformar sua vida acadêmica?
@@ -322,7 +248,10 @@ const Landing: React.FC = () => {
           <p className="text-xl mb-8 max-w-2xl mx-auto">
             Junte-se a milhares de estudantes que já estão otimizando seus estudos.
           </p>
-          <button className="bg-white text-indigo-600 hover:bg-gray-100 px-8 py-4 rounded-lg font-bold text-lg transition duration-300 shadow-lg">
+          <button 
+            onClick={openCreateUserModal}
+            className="bg-academo-cream text-academo-brown hover:bg-white px-8 py-4 rounded-lg font-bold text-lg transition duration-300 shadow-lg"
+          >
             Comece Agora Gratuitamente
           </button>
         </div>
@@ -432,6 +361,19 @@ const Landing: React.FC = () => {
           </div>
         </div>
       </footer>
+
+      {/* Modal de Criação de Usuário */}
+      <CreateUserModal 
+        isOpen={isCreateUserModalOpen}
+        onClose={() => setIsCreateUserModalOpen(false)}
+        onLogin={() => setIsLoginModalOpen(true)}
+      />
+
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onCreateAccount={() => setIsCreateUserModalOpen(true)}
+      />
     </div>
   );
 };

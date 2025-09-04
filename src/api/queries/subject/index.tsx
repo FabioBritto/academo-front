@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
-import api from ".."
-import type { Subject } from "../types/subject"
+import api from "../.."
+import type { Subject } from "../../types/subject"
 
 export const useSubjectQuery = () => {
     const useGetSubject = (subjectId: number) => {
