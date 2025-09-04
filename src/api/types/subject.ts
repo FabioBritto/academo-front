@@ -10,12 +10,19 @@ export interface Subject {
     user?: {
         id: number;
     };
+    group?: {
+        id: number;
+        name: string;
+    };
 }
 
 export interface CreateSubjectDTO {
     name: string;
     description?: string;
     user: {
+        id: number;
+    };
+    group?: {
         id: number;
     };
 }
@@ -47,7 +54,12 @@ export const subjectsApi = {
             description: payload.description || "",
             user: {
                 id: payload.user.id
-            }
+            },
+            ...(payload.group && {
+                group: {
+                    id: payload.group.id
+                }
+            })
         };
         const response = await api.post<Subject>("/subjects", subjectPayload);
         return response.data;

@@ -8,13 +8,18 @@ export const useSubjectMutations = () => {
 
     const useCreateSubjectMutation = () => {
         return useMutation({
-            mutationFn: async (payload: { name: string; description?: string; userId: number }) => {
+            mutationFn: async (payload: { name: string; description?: string; userId: number; groupId?: number }) => {
                 const createPayload: CreateSubjectDTO = {
                     name: payload.name,
                     description: payload.description,
                     user: {
                         id: payload.userId
-                    }
+                    },
+                    ...(payload.groupId && {
+                        group: {
+                            id: payload.groupId
+                        }
+                    })
                 };
                 return await subjectsApi.createSubject(createPayload);
             },

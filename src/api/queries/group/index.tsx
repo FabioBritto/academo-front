@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import type { Group, GroupDTO } from "../../types/group";
 import { groupsApi } from "../../types/group";
 
 export const useGroupQueries = () => {
