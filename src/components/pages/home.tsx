@@ -1,17 +1,17 @@
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { useSubjectQuery } from '../../api/queries/subject';
+import { useSubjectQueries } from '../../api/queries/subject';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 
 export function Home() {
-  const { useGetSubject } = useSubjectQuery();
+  const { useGetSubjectById } = useSubjectQueries();
   const [isFetchingSubject, setIsFetchingSubject] = useState(false)
   const [subjectId, setSubjectId] = useState<number>(2)
   const queryClient = useQueryClient()
 
   // Query para buscar matéria baseada no subjectId
-  const { data: subject, isLoading: isLoadingSubject, error: subjectError } = useGetSubject(subjectId)
+  const { data: subject, isLoading: isLoadingSubject, error: subjectError } = useGetSubjectById(subjectId)
 
   const handleGetSubject = async () => {
     setIsFetchingSubject(true)
