@@ -2,9 +2,9 @@ import { createRouter, createRoute, createRootRoute, redirect } from '@tanstack/
 import Landing from './components/pages/landing-page/landing';
 import { Home } from './components/pages/home';
 import { About } from './components/pages/about';
-import { Grupos } from './components/pages/grupos';
-import { Materias } from './components/pages/materias';
-import { Atividades } from './components/pages/atividades';
+import { Grupos } from './components/pages/groups';
+import { Materias } from './components/pages/subjects';
+import { Atividades } from './components/pages/activities';
 import { RootLayout } from './components/ui/layout/root-layout';
 import { AuthLayout } from './components/ui/layout/auth-layout';
 

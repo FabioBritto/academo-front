@@ -1,20 +1,26 @@
-import { useQuery } from "@tanstack/react-query"
-import api from "../.."
-import type { Subject } from "../../types/subject"
+import { useQuery } from "@tanstack/react-query";
+import { subjectsApi } from "../../types/subject";
 
-export const useSubjectQuery = () => {
-    const useGetSubject = (subjectId: number) => {
+export const useSubjectQueries = () => {
+
+    const useGetSubjects = (userId: number) => {
+        return useQuery({
+            queryKey: ['subjects', userId],
+            queryFn: () => subjectsApi.getSubjects(userId),
+            enabled: !!userId, // Só executa se userId estiver definido
+        });
+    };
+
+    const useGetSubjectById = (subjectId: number) => {
         return useQuery({
             queryKey: ['subject', subjectId],
-            queryFn: async () => (
-                await api.get<Subject>(`/subjects/${subjectId}`)
-            ).data,
-            enabled: !!subjectId
-        })
-    }
-
+            queryFn: () => subjectsApi.getSubjectById(subjectId),
+            enabled: !!subjectId, // Só executa se subjectId estiver definido
+        });
+    };
 
     return {
-        useGetSubject
-    }
-}
+        useGetSubjects,
+        useGetSubjectById
+    };
+};

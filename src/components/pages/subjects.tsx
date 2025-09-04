@@ -1,49 +1,47 @@
 import React, { useState } from 'react';
-import { useGroupQueries } from '../../api/queries/group';
-import { useGroupMutations } from '../../api/mutations/group';
-import { CreateGroupModal } from './CreateGroupModal';
+import { useSubjectQueries } from '../../api/queries/subject';
+import { useSubjectMutations } from '../../api/mutations/subject';
+import { CreateSubjectModal } from './create-subject-modal';
 import { Button } from '../ui/button';
 import { toast } from 'sonner';
 
-export function Grupos() {
+export function Materias() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
+  const [selectedSubjectId, setSelectedSubjectId] = useState<number | null>(null);
 
   // Por enquanto usando um userId fixo - depois pode vir do auth store
   const userId = 1;
 
-  const { useGetGroups } = useGroupQueries();
-  const { useDeleteGroupMutation } = useGroupMutations();
+  const { useGetSubjects } = useSubjectQueries();
+  const { useDeleteSubjectMutation } = useSubjectMutations();
   
-  const { data: groups = [], isLoading, error, refetch } = useGetGroups(userId);
-  const deleteGroupMutation = useDeleteGroupMutation();
+  const { data: subjects = [], isLoading, error, refetch } = useGetSubjects(userId);
+  const deleteSubjectMutation = useDeleteSubjectMutation();
 
-  const handleDeleteGroup = async (groupId: number, groupName: string) => {
-    if (window.confirm(`Tem certeza que deseja excluir o grupo "${groupName}"?`)) {
+  const handleDeleteSubject = async (subjectId: number, subjectName: string) => {
+    if (window.confirm(`Tem certeza que deseja excluir a matéria "${subjectName}"?`)) {
       try {
-        await deleteGroupMutation.mutateAsync(groupId);
-        toast.success('Grupo excluído com sucesso!');
+        await deleteSubjectMutation.mutateAsync(subjectId);
+        toast.success('Matéria excluída com sucesso!');
       } catch (error) {
-        console.error('Erro ao excluir grupo:', error);
-        toast.error('Não foi possível excluir o grupo. Tente novamente.');
+        console.error('Erro ao excluir matéria:', error);
+        toast.error('Não foi possível excluir a matéria. Tente novamente.');
       }
     }
   };
 
   const handleRefresh = () => {
     refetch();
-    toast.info('Lista de grupos atualizada');
+    toast.info('Lista de matérias atualizada');
   };
-
-
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Grupos</h1>
-          <p className="text-gray-600">Gerencie seus grupos de estudo</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Matérias</h1>
+          <p className="text-gray-600">Gerencie suas matérias acadêmicas</p>
         </div>
         
         <div className="flex space-x-3">
@@ -65,7 +63,7 @@ export function Grupos() {
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            Novo Grupo
+            Nova Matéria
           </Button>
         </div>
       </div>
@@ -80,7 +78,7 @@ export function Grupos() {
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              <span className="text-gray-600">Carregando grupos...</span>
+              <span className="text-gray-600">Carregando matérias...</span>
             </div>
           </div>
         ) : error ? (
@@ -89,28 +87,28 @@ export function Grupos() {
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
               <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
                 <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                 </svg>
               </div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Nenhum grupo encontrado
+                Nenhuma matéria encontrada
               </h3>
               <p className="text-gray-600 text-sm mb-4">
-                Não foi possível carregar grupos ou você ainda não possui grupos cadastrados.
+                Não foi possível carregar matérias ou você ainda não possui matérias cadastradas.
               </p>
               <p className="text-gray-500 text-xs">
-                Use o botão <span className="font-medium text-academo-brown">"Novo Grupo"</span> acima para criar seu primeiro grupo de estudo.
+                Use o botão <span className="font-medium text-academo-brown">"Nova Matéria"</span> acima para criar sua primeira matéria.
               </p>
             </div>
           </div>
-        ) : groups && groups.length > 0 ? (
-          // Groups Table
+        ) : subjects && subjects.length > 0 ? (
+          // Subjects Table
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Nome do Grupo
+                    Nome da Matéria
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Descrição
@@ -121,35 +119,35 @@ export function Grupos() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {groups.map((group, index) => (
+                {subjects.map((subject, index) => (
                   <tr 
-                    key={group.id}
+                    key={subject.id}
                     className={`hover:bg-gray-50 transition-colors ${
-                      selectedGroupId === group.id ? 'bg-blue-50' : ''
+                      selectedSubjectId === subject.id ? 'bg-blue-50' : ''
                     }`}
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-8 w-8">
-                          <div className="h-8 w-8 rounded-full bg-academo-sage flex items-center justify-center">
+                          <div className="h-8 w-8 rounded-full bg-academo-peach flex items-center justify-center">
                             <span className="text-sm font-medium text-white">
-                              {group.name.charAt(0).toUpperCase()}
+                              {subject.name.charAt(0).toUpperCase()}
                             </span>
                           </div>
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">
-                            {group.name}
+                            {subject.name}
                           </div>
                           <div className="text-sm text-gray-500">
-                            ID: {group.id}
+                            ID: {subject.id}
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm text-gray-900">
-                        {group.description || (
+                        {subject.description || (
                           <span className="text-gray-400 italic">
                             Sem descrição
                           </span>
@@ -158,7 +156,7 @@ export function Grupos() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                       <button
-                        onClick={() => setSelectedGroupId(selectedGroupId === group.id ? null : group.id)}
+                        onClick={() => setSelectedSubjectId(selectedSubjectId === subject.id ? null : subject.id)}
                         className="text-academo-brown hover:text-academo-sage transition-colors"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -176,8 +174,8 @@ export function Grupos() {
                       </button>
                       
                       <button
-                        onClick={() => handleDeleteGroup(group.id, group.name)}
-                        disabled={deleteGroupMutation.isPending}
+                        onClick={() => handleDeleteSubject(subject.id, subject.name)}
+                        disabled={deleteSubjectMutation.isPending}
                         className="text-red-600 hover:text-red-800 transition-colors disabled:opacity-50"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -196,34 +194,34 @@ export function Grupos() {
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
               <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
                 <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                 </svg>
               </div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Nenhum grupo encontrado
+                Nenhuma matéria encontrada
               </h3>
               <p className="text-gray-600 text-sm mb-4">
-                Você ainda não possui grupos de estudo cadastrados.
+                Você ainda não possui matérias acadêmicas cadastradas.
               </p>
               <p className="text-gray-500 text-xs">
-                Use o botão <span className="font-medium text-academo-brown">"Novo Grupo"</span> acima para criar seu primeiro grupo de estudo.
+                Use o botão <span className="font-medium text-academo-brown">"Nova Matéria"</span> acima para criar sua primeira matéria.
               </p>
             </div>
           </div>
         )}
 
-        {/* Groups Count Footer */}
-        {groups && groups.length > 0 && (
+        {/* Subjects Count Footer */}
+        {subjects && subjects.length > 0 && (
           <div className="bg-gray-50 px-6 py-3 border-t border-gray-200">
             <p className="text-sm text-gray-600">
-              Total: {groups.length} grupo{groups.length !== 1 ? 's' : ''} encontrado{groups.length !== 1 ? 's' : ''}
+              Total: {subjects.length} matéria{subjects.length !== 1 ? 's' : ''} encontrada{subjects.length !== 1 ? 's' : ''}
             </p>
           </div>
         )}
       </div>
 
-      {/* Create Group Modal */}
-      <CreateGroupModal 
+      {/* Create Subject Modal */}
+      <CreateSubjectModal 
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
       />
