@@ -45,6 +45,16 @@ export function AppSidebar() {
         navigate({ to: href });
     };
 
+    const toggleSidebar = () => {
+        setCollapsed(!collapsed);
+    };
+
+    const handleLogoClick = () => {
+        if (collapsed) {
+            setCollapsed(false);
+        }
+    };
+
     return (
         <div className={`bg-academo-cream border-r border-academo-peach shadow-lg h-full transition-all duration-300 ${collapsed ? 'w-16' : 'w-64'}`}>
             {/* Header */}
@@ -64,17 +74,20 @@ export function AppSidebar() {
                         <img 
                             src={academoLogo} 
                             alt="Academo" 
-                            className="w-8 h-8 rounded-full object-cover mx-auto" 
+                            className="w-8 h-8 rounded-full object-cover mx-auto cursor-pointer hover:scale-110 transition-transform" 
+                            onClick={handleLogoClick}
                         />
                     )}
-                    <button
-                        onClick={() => setCollapsed(!collapsed)}
-                        className="p-2 rounded-lg hover:bg-academo-peach transition-colors text-academo-brown"
-                    >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                        </svg>
-                    </button>
+                    {!collapsed && (
+                        <button
+                            onClick={toggleSidebar}
+                            className="p-2 rounded-lg hover:bg-academo-peach transition-colors text-academo-brown"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </button>
+                    )}
                 </div>
             </div>
 
