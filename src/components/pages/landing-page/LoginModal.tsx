@@ -72,10 +72,10 @@ export function LoginModal({ isOpen, onClose, onCreateAccount }: LoginModalProps
       console.log('userData', userData);
       
 
-      const mockToken = userData.token;
+      const token = userData.token;
       
       // Salva o estado de autenticação no store
-      login(mockToken, {
+      login(token, {
         id: userData.id,
         name: userData.name,
         email: userData.email,

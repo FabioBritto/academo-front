@@ -6,6 +6,10 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { Toaster } from 'react-hot-toast'
 import './index.css'
 import { router } from './routes'
+import { setupAuthInterceptors } from './api/mutations/user'
+
+// Configura os interceptadores de autenticação antes de inicializar a aplicação
+setupAuthInterceptors();
 
 const queryClient = new QueryClient({
   defaultOptions: {

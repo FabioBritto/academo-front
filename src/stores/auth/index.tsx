@@ -14,13 +14,14 @@ interface AuthStore {
     user: User | null;
     login: (token: string, user: User) => void;
     logout: () => void;
+    validateSavedToken: () => Promise<void>;
     _hasHydrated: boolean;
     setHasHydrated: (state: boolean) => void;
 }
 
 export const useAuthStore = create<AuthStore>()(
     persist(
-        (set) => ({
+        (set, get) => ({
             isAuthenticated: false,
             token: null,
             user: null,
@@ -32,6 +33,27 @@ export const useAuthStore = create<AuthStore>()(
                 localStorage.removeItem(STORAGE_KEYS.accessToken);
                 set({ isAuthenticated: false, token: null, user: null });
             },
+            validateSavedToken: async () => {
+                const { token } = get();
+                
+                if (!token) {
+                    return;
+                }
+                
+                try {
+                    // Importação dinâmica para evitar dependência circular
+                    const { validateToken } = await import('../../api/mutations/user');
+                    const isValid = await validateToken();
+                    
+                    if (!isValid) {
+                        // Token inválido - limpa o estado
+                        get().logout();
+                    }
+                } catch (error) {
+                    console.error('Erro ao validar token salvo:', error);
+                    get().logout();
+                }
+            },
             _hasHydrated: false,
             setHasHydrated: (state) => set({ _hasHydrated: state }),
         }),
@@ -40,6 +62,8 @@ export const useAuthStore = create<AuthStore>()(
             onRehydrateStorage: () => (state) => {
                 if (state) {
                     state.setHasHydrated(true);
+                    // Valida o token salvo após hidratar o estado
+                    state.validateSavedToken();
                 }
             },
         }
