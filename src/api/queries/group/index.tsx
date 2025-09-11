@@ -3,11 +3,10 @@ import { groupsApi } from "../../types/group";
 
 export const useGroupQueries = () => {
 
-    const useGetGroups = (userId: number) => {
+    const useGetGroups = () => {
         return useQuery({
-            queryKey: ['groups', userId],
-            queryFn: () => groupsApi.getGroups(userId),
-            enabled: !!userId, // Só executa se userId estiver definido
+            queryKey: ['groups'],
+            queryFn: () => groupsApi.getGroups(),
         });
     };
 

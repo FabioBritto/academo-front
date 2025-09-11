@@ -3,11 +3,10 @@ import { subjectsApi } from "../../types/subject";
 
 export const useSubjectQueries = () => {
 
-    const useGetSubjects = (userId: number) => {
+    const useGetSubjects = () => {
         return useQuery({
-            queryKey: ['subjects', userId],
-            queryFn: () => subjectsApi.getSubjects(userId),
-            enabled: !!userId, // Só executa se userId estiver definido
+            queryKey: ['subjects'],
+            queryFn: () => subjectsApi.getSubjects(),
         });
     };
 

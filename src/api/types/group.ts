@@ -13,6 +13,7 @@ export interface GroupDTO {
     id: number;
     name: string;
     description: string;
+    isActive: boolean;
 }
 
 export interface CreateGroupDTO {
@@ -21,6 +22,7 @@ export interface CreateGroupDTO {
 }
 
 export interface UpdateGroupDTO {
+    id: number;
     name?: string;
     description?: string;
     isActive?: boolean;
@@ -46,8 +48,8 @@ export const groupsApi = {
     },
 
     // PUT /groups/{groupId} - Atualiza um grupo
-    updateGroup: async (groupId: number, payload: UpdateGroupDTO) => {
-        const response = await api.put<Group>(`/groups/${groupId}`, payload);
+    updateGroup: async (payload: UpdateGroupDTO) => {
+        const response = await api.put<Group>(`/groups`, payload);
         return response.data;
     },
 

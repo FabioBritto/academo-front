@@ -36,8 +36,8 @@ export interface UpdateSubjectDTO {
 
 export const subjectsApi = {
     // GET /subjects/all/{userId} - Lista todas as matérias
-    getSubjects: async (userId: number) => {
-        const response = await api.get<Subject[]>(`/subjects/all/${userId}`);
+    getSubjects: async () => {
+        const response = await api.get<Subject[]>(`/subjects/all`);
         return response.data;
     },
 
