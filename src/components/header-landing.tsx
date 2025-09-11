@@ -78,14 +78,6 @@ export function HeaderLanding() {
             >
               Crie sua Conta Grátis
             </button>
-            
-            {/* Link para desenvolvimento - remover em produção */}
-            <button 
-              onClick={() => navigate({ to: '/app/home' })}
-              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition duration-300"
-            >
-              Área Logada (Dev)
-            </button>
           </div>
 
           {/* Menu mobile */}
