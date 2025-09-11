@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useUserMutations } from '../../../api/mutations/user';
 import { useNavigate } from '@tanstack/react-router';
+import { toast } from 'react-toastify';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -66,12 +67,12 @@ export function LoginModal({ isOpen, onClose, onCreateAccount }: LoginModalProps
       setErrors({ email: '', password: '' });
       setShowPassword(false);
       
-      alert('Login realizado com sucesso!');
+      toast.success('Login realizado com sucesso!');
       navigate({ to: '/app/home'});
       
     } catch (error) {
       console.error('Erro ao fazer login:', error);
-      alert('Erro ao fazer login. Tente novamente.');
+      toast.error('Erro ao fazer login. Tente novamente.');
     } finally {
       setIsLoading(false);
     }
