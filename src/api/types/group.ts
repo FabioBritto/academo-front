@@ -28,8 +28,8 @@ export interface UpdateGroupDTO {
 
 export const groupsApi = {
     // GET /groups/all/{userId} - Lista todos os grupos
-    getGroups: async (userId: number) => {
-        const response = await api.get<GroupDTO[]>(`/groups/all/${userId}`);
+    getGroups: async () => {
+        const response = await api.get<GroupDTO[]>(`/groups/all`);
         return response.data;
     },
 
