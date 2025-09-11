@@ -51,10 +51,11 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
     try {
       const createGroupDTO = {
         name: formData.name.trim(),
-        description: formData.description.trim() || undefined,
+        description: formData.description.trim(),
       };
       
-      await createGroupMutation.mutateAsync(createGroupDTO);
+      const response = await createGroupMutation.mutateAsync(createGroupDTO);
+      console.log('response', response);
       toast.success('Grupo criado com sucesso!');
       
       handleClose();

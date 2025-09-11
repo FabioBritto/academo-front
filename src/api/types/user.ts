@@ -8,6 +8,7 @@ export interface User {
     createdAt: Date;
     updatedAt: Date;
     isActive: boolean;
+    token: string;
 }
 
 export interface CreateUserDTO {
@@ -19,6 +20,7 @@ export interface CreateUserDTO {
 export interface LoginDTO {
     username: string;
     password: string;
+    token: string;
 }
 
 export interface UpdateUserDTO {

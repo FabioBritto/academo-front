@@ -2,6 +2,7 @@ import { useNavigate, useLocation } from "@tanstack/react-router";
 import { Activity, Book, Group, Home, LogOut } from "lucide-react";
 import { useState, useCallback } from "react";
 import academoLogo from '../../../assets/academo-logo.jpeg';
+import { useAuthStore } from '../../../stores/auth';
 
 const menuItems = [
     {
@@ -31,9 +32,10 @@ export function AppSidebar() {
     const location = useLocation();
     const [collapsedMenus, setCollapsedMenus] = useState<Record<string, boolean>>({});
     const [collapsed, setCollapsed] = useState(false);
+    const { logout } = useAuthStore();
 
     const handleLogout = () => {
-        
+        logout();
         navigate({ to: '/' });
     }
 
