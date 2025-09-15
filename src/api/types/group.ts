@@ -53,8 +53,8 @@ export const groupsApi = {
         return response.data;
     },
 
-    // DELETE /groups/{groupId} - Deleta um grupo
+    // DELETE /groups?groupId={groupId} - Deleta um grupo
     deleteGroup: async (groupId: number) => {
-        await api.delete(`/groups/${groupId}`);
+        await api.delete(`/groups?groupId=${groupId}`);
     }
 }

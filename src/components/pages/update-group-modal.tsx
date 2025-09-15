@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useGroupMutations } from '../../api/mutations/group';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import { Switch } from '../ui/switch';
 import type { GroupDTO } from '../../api/types/group';
 

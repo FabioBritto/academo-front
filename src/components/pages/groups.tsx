@@ -4,7 +4,7 @@ import { useSubjectQueries } from '../../api/queries/subject';
 import { useGroupMutations } from '../../api/mutations/group';
 import { CreateGroupModal } from './create-group-modal';
 import { UpdateGroupModal } from './update-group-modal';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import { PlusIcon, Users, BookOpen, Eye, Edit, Trash2 } from 'lucide-react';
 import type { GroupDTO } from '../../api/types/group';
 

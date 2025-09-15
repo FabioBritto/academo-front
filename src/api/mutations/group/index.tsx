@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { CreateGroupDTO, UpdateGroupDTO } from "../../types/group";
 import { groupsApi } from "../../types/group";
-import { toast } from "react-toastify";
+import { toast } from "sonner";
 
 export const useGroupMutations = () => {
 
@@ -43,7 +43,7 @@ export const useGroupMutations = () => {
             mutationFn: async (groupId: number) => {
                 return await groupsApi.deleteGroup(groupId);
             },
-            onSuccess: (data, groupId) => {
+            onSuccess: (groupId) => {
                 // Invalida as queries de grupos e remove o grupo específico do cache
                 queryClient.invalidateQueries({ queryKey: ["groups"] });
                 queryClient.removeQueries({ queryKey: ["group", groupId] });

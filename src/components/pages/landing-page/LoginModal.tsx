@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useUserMutations } from '../../../api/mutations/user';
 import { useNavigate, useSearch } from '@tanstack/react-router';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import { useAuthStore } from '../../../stores/auth';
 
 interface LoginModalProps {
