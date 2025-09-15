@@ -71,8 +71,8 @@ export function UpdateGroupModal({ isOpen, onClose, group }: UpdateGroupModalPro
       };
       
       await updateGroupMutation.mutateAsync({
-        groupId: group.id,
-        payload: updateGroupDTO
+        id: group.id,
+        ...updateGroupDTO
       });
       
       toast.success('Grupo atualizado com sucesso!');
