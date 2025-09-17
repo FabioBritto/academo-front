@@ -13,6 +13,7 @@ export interface GroupDTO {
     id: number;
     name: string;
     description: string;
+    isActive: boolean;
 }
 
 export interface CreateGroupDTO {
@@ -21,6 +22,7 @@ export interface CreateGroupDTO {
 }
 
 export interface UpdateGroupDTO {
+    id: number;
     name?: string;
     description?: string;
     isActive?: boolean;
@@ -28,8 +30,8 @@ export interface UpdateGroupDTO {
 
 export const groupsApi = {
     // GET /groups/all/{userId} - Lista todos os grupos
-    getGroups: async (userId: number) => {
-        const response = await api.get<GroupDTO[]>(`/groups/all/${userId}`);
+    getGroups: async () => {
+        const response = await api.get<GroupDTO[]>(`/groups/all`);
         return response.data;
     },
 
@@ -46,13 +48,13 @@ export const groupsApi = {
     },
 
     // PUT /groups/{groupId} - Atualiza um grupo
-    updateGroup: async (groupId: number, payload: UpdateGroupDTO) => {
-        const response = await api.put<Group>(`/groups/${groupId}`, payload);
+    updateGroup: async (payload: UpdateGroupDTO) => {
+        const response = await api.put<Group>(`/groups`, payload);
         return response.data;
     },
 
-    // DELETE /groups/{groupId} - Deleta um grupo
+    // DELETE /groups?groupId={groupId} - Deleta um grupo
     deleteGroup: async (groupId: number) => {
-        await api.delete(`/groups/${groupId}`);
+        await api.delete(`/groups?groupId=${groupId}`);
     }
 }

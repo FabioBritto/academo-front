@@ -1,16 +1,20 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGroupMutations } from '../../api/mutations/group';
 import { toast } from 'sonner';
+import { Switch } from '../ui/switch';
+import type { GroupDTO } from '../../api/types/group';
 
-interface CreateGroupModalProps {
+interface UpdateGroupModalProps {
   isOpen: boolean;
   onClose: () => void;
+  group: GroupDTO | null;
 }
 
-export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
+export function UpdateGroupModal({ isOpen, onClose, group }: UpdateGroupModalProps) {
   const [formData, setFormData] = useState({
     name: '',
-    description: ''
+    description: '',
+    isActive: true
   });
   
   const [errors, setErrors] = useState({
@@ -19,8 +23,19 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
   });
   
   const [isLoading, setIsLoading] = useState(false);
-  const { useCreateGroupMutation } = useGroupMutations();
-  const createGroupMutation = useCreateGroupMutation();
+  const { useUpdateGroupMutation } = useGroupMutations();
+  const updateGroupMutation = useUpdateGroupMutation();
+
+  // Preencher o formulário quando o grupo mudar
+  useEffect(() => {
+    if (group) {
+      setFormData({
+        name: group.name || '',
+        description: group.description || '',
+        isActive: group.isActive ?? true
+      });
+    }
+  }, [group]);
 
   const validateForm = () => {
     const newErrors = {
@@ -42,26 +57,29 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm()) {
+    if (!validateForm() || !group) {
       return;
     }
 
     setIsLoading(true);
     
     try {
-      const createGroupDTO = {
+      const updateGroupDTO = {
         name: formData.name.trim(),
         description: formData.description.trim(),
+        isActive: formData.isActive
       };
       
-      const response = await createGroupMutation.mutateAsync(createGroupDTO);
-      console.log('response', response);
-      toast.success('Grupo criado com sucesso!');
+      await updateGroupMutation.mutateAsync({
+        id: group.id,
+        ...updateGroupDTO
+      });
       
+      toast.success('Grupo atualizado com sucesso!');
       handleClose();
     } catch (error) {
-      console.error('Erro ao criar grupo:', error);
-      toast.error('Não foi possível criar o grupo. Tente novamente.');
+      console.error('Erro ao atualizar grupo:', error);
+      toast.error('Não foi possível atualizar o grupo. Tente novamente.');
     } finally {
       setIsLoading(false);
     }
@@ -76,15 +94,19 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
     }
   };
 
+  const handleSwitchChange = (checked: boolean) => {
+    setFormData(prev => ({ ...prev, isActive: checked }));
+  };
+
   const handleClose = () => {
     if (!isLoading) {
       onClose();
-      setFormData({ name: '', description: '' });
+      setFormData({ name: '', description: '', isActive: true });
       setErrors({ name: '', description: '' });
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !group) return null;
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -101,7 +123,7 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
           <div className="bg-academo-brown px-6 py-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-white">
-                Criar Novo Grupo
+                Editar Grupo
               </h3>
               <button
                 onClick={handleClose}
@@ -114,7 +136,7 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
               </button>
             </div>
             <p className="text-orange-100 text-sm mt-1">
-              Preencha os dados abaixo para criar um novo grupo de estudo
+              Edite os dados do grupo "{group.name}"
             </p>
           </div>
 
@@ -144,7 +166,7 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
             </div>
 
             {/* Descrição */}
-            <div className="mb-6">
+            <div className="mb-4">
               <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
                 Descrição (opcional)
               </label>
@@ -161,6 +183,26 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
               />
               <p className="mt-1 text-xs text-gray-500">
                 {formData.description.length}/500 caracteres
+              </p>
+            </div>
+
+            {/* Status */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Status do Grupo
+              </label>
+              <Switch
+                id="isActive"
+                checked={formData.isActive}
+                onChange={handleSwitchChange}
+                disabled={isLoading}
+                label={formData.isActive ? 'Ativo' : 'Inativo'}
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                {formData.isActive 
+                  ? 'O grupo está ativo e visível para os membros' 
+                  : 'O grupo está inativo e não será exibido'
+                }
               </p>
             </div>
 
@@ -185,10 +227,10 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Criando...
+                    Salvando...
                   </div>
                 ) : (
-                  'Criar Grupo'
+                  'Salvar Alterações'
                 )}
               </button>
             </div>

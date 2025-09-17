@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { CreateGroupDTO, UpdateGroupDTO } from "../../types/group";
 import { groupsApi } from "../../types/group";
+import { toast } from "sonner";
 
 export const useGroupMutations = () => {
 
@@ -23,16 +24,16 @@ export const useGroupMutations = () => {
 
     const useUpdateGroupMutation = () => {
         return useMutation({
-            mutationFn: async ({ groupId, payload }: { groupId: number; payload: UpdateGroupDTO }) => {
-                return await groupsApi.updateGroup(groupId, payload);
+            mutationFn: async (payload: UpdateGroupDTO) => {
+                return await groupsApi.updateGroup(payload);
             },
-            onSuccess: (data, variables) => {
+            onSuccess: () => {
                 // Invalida as queries de grupos e o grupo específico
                 queryClient.invalidateQueries({ queryKey: ["groups"] });
-                queryClient.invalidateQueries({ queryKey: ["group", variables.groupId] });
+                toast.success('Grupo atualizado com sucesso!');
             },
-            onError: (error) => {
-                return `Não foi possível atualizar o grupo: ${error.message}`;
+            onError: () => {
+                return `Não foi possível atualizar o grupo`;
             }
         });
     };
@@ -42,7 +43,7 @@ export const useGroupMutations = () => {
             mutationFn: async (groupId: number) => {
                 return await groupsApi.deleteGroup(groupId);
             },
-            onSuccess: (data, groupId) => {
+            onSuccess: (groupId) => {
                 // Invalida as queries de grupos e remove o grupo específico do cache
                 queryClient.invalidateQueries({ queryKey: ["groups"] });
                 queryClient.removeQueries({ queryKey: ["group", groupId] });

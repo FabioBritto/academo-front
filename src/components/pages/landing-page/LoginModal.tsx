@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useUserMutations } from '../../../api/mutations/user';
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate, useSearch } from '@tanstack/react-router';
+import { toast } from 'sonner';
+import { useAuthStore } from '../../../stores/auth';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -10,6 +12,7 @@ interface LoginModalProps {
 
 export function LoginModal({ isOpen, onClose, onCreateAccount }: LoginModalProps) {
   const navigate = useNavigate();
+  const search = useSearch({ from: '/' });
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -24,6 +27,7 @@ export function LoginModal({ isOpen, onClose, onCreateAccount }: LoginModalProps
   const [showPassword, setShowPassword] = useState(false);
   const { useLoginMutation } = useUserMutations();
   const loginMutation = useLoginMutation();
+  const { login } = useAuthStore();
 
   const validateForm = () => {
     const newErrors = {
@@ -59,19 +63,38 @@ export function LoginModal({ isOpen, onClose, onCreateAccount }: LoginModalProps
     setIsLoading(true);
     
     try {
-      await loginMutation.mutateAsync({ username: formData.email, password: formData.password });
+      const userData = await loginMutation.mutateAsync({ 
+        username: formData.email, 
+        password: formData.password,
+        token: '' // Campo obrigatório na interface, mas não usado no login
+      });
+
+      console.log('userData', userData);
+      
+
+      const token = userData.token;
+      
+      // Salva o estado de autenticação no store
+      login(token, {
+        id: userData.id,
+        name: userData.name,
+        email: userData.email,
+      });
       
       onClose();
       setFormData({ email: '', password: '' });
       setErrors({ email: '', password: '' });
       setShowPassword(false);
       
-      alert('Login realizado com sucesso!');
-      navigate({ to: '/app/home'});
+      toast.success('Login realizado com sucesso!');
+      
+      // Redireciona para a URL original ou para /app/home
+      const redirectTo = (search as any)?.redirect || '/app/home';
+      navigate({ to: redirectTo });
       
     } catch (error) {
       console.error('Erro ao fazer login:', error);
-      alert('Erro ao fazer login. Tente novamente.');
+      toast.error('Erro ao fazer login. Tente novamente.');
     } finally {
       setIsLoading(false);
     }
