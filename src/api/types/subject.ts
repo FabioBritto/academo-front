@@ -32,6 +32,9 @@ export interface UpdateSubjectDTO {
     name: string;
     description?: string;
     isActive?: boolean;
+    group?: {
+        id: number;
+    };
 }
 
 export const subjectsApi = {
@@ -67,7 +70,18 @@ export const subjectsApi = {
 
     // PUT /subjects/{subjectId} - Atualiza uma matéria
     updateSubject: async (subjectId: number, payload: UpdateSubjectDTO) => {
-        const response = await api.put<Subject>(`/subjects/${subjectId}`, payload);
+        const updatePayload = {
+            id: payload.id,
+            name: payload.name,
+            description: payload.description || "",
+            isActive: payload.isActive,
+            ...(payload.group && {
+                group: {
+                    id: payload.group.id
+                }
+            })
+        };
+        const response = await api.put<Subject>(`/subjects/${subjectId}`, updatePayload);
         return response.data;
     },
 

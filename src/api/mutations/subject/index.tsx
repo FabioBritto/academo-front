@@ -35,12 +35,17 @@ export const useSubjectMutations = () => {
 
     const useUpdateSubjectMutation = () => {
         return useMutation({
-            mutationFn: async ({ subjectId, payload }: { subjectId: number; payload: { name: string; description?: string; isActive?: boolean } }) => {
+            mutationFn: async ({ subjectId, payload }: { subjectId: number; payload: { name: string; description?: string; isActive?: boolean; groupId?: number } }) => {
                 const updatePayload: UpdateSubjectDTO = {
                     id: subjectId,
                     name: payload.name,
                     description: payload.description,
-                    isActive: payload.isActive
+                    isActive: payload.isActive,
+                    ...(payload.groupId && {
+                        group: {
+                            id: payload.groupId
+                        }
+                    })
                 };
                 return await subjectsApi.updateSubject(subjectId, updatePayload);
             },

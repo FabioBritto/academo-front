@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import { useSubjectMutations } from '../../api/mutations/subject';
-import { useGroupQueries } from '../../api/queries/group';
-import { Select } from '../ui/select';
 import { toast } from 'sonner';
 
 interface CreateSubjectModalProps {
@@ -12,30 +10,22 @@ interface CreateSubjectModalProps {
 export function CreateSubjectModal({ isOpen, onClose }: CreateSubjectModalProps) {
   const [formData, setFormData] = useState({
     name: '',
-    description: '',
-    groupId: ''
+    description: ''
   });
   
   const [errors, setErrors] = useState({
     name: '',
-    description: '',
-    groupId: ''
+    description: ''
   });
   
   const [isLoading, setIsLoading] = useState(false);
   const { useCreateSubjectMutation } = useSubjectMutations();
-  const { useGetGroups } = useGroupQueries();
   const createSubjectMutation = useCreateSubjectMutation();
-  
-  // Por enquanto usando userId fixo - depois pode vir do auth store
-  const userId = 1;
-  const { data: groups = [], isLoading: isLoadingGroups } = useGetGroups(userId);
 
   const validateForm = () => {
     const newErrors = {
       name: '',
-      description: '',
-      groupId: ''
+      description: ''
     };
 
     // Validação de nome
@@ -43,11 +33,6 @@ export function CreateSubjectModal({ isOpen, onClose }: CreateSubjectModalProps)
       newErrors.name = 'Nome da matéria é obrigatório';
     } else if (formData.name.trim().length < 3) {
       newErrors.name = 'Nome deve ter pelo menos 3 caracteres';
-    }
-
-    // Validação de grupo (opcional, mas se fornecido deve ser válido)
-    if (formData.groupId && !groups.some(group => group.id.toString() === formData.groupId)) {
-      newErrors.groupId = 'Grupo selecionado é inválido';
     }
 
     setErrors(newErrors);
@@ -70,8 +55,7 @@ export function CreateSubjectModal({ isOpen, onClose }: CreateSubjectModalProps)
       const payload = {
         name: formData.name.trim(),
         description: formData.description.trim() || undefined,
-        userId: userId,
-        ...(formData.groupId && { groupId: parseInt(formData.groupId) })
+        userId: userId
       };
       
       await createSubjectMutation.mutateAsync(payload);
@@ -98,8 +82,8 @@ export function CreateSubjectModal({ isOpen, onClose }: CreateSubjectModalProps)
   const handleClose = () => {
     if (!isLoading) {
       onClose();
-      setFormData({ name: '', description: '', groupId: '' });
-      setErrors({ name: '', description: '', groupId: '' });
+      setFormData({ name: '', description: '' });
+      setErrors({ name: '', description: '' });
     }
   };
 
@@ -183,30 +167,7 @@ export function CreateSubjectModal({ isOpen, onClose }: CreateSubjectModalProps)
               </p>
             </div>
 
-            {/* Grupo */}
-            <div className="mb-6">
-              <label htmlFor="groupId" className="block text-sm font-medium text-gray-700 mb-2">
-                Grupo (opcional)
-              </label>
-              <Select
-                id="groupId"
-                name="groupId"
-                value={formData.groupId}
-                onChange={handleInputChange}
-                placeholder={isLoadingGroups ? "Carregando grupos..." : "Selecione um grupo"}
-                disabled={isLoading || isLoadingGroups}
-                error={errors.groupId}
-                options={groups.map(group => ({
-                  value: group.id.toString(),
-                  label: group.name
-                }))}
-              />
-              {!isLoadingGroups && groups.length === 0 && (
-                <p className="mt-1 text-xs text-gray-500">
-                  Nenhum grupo disponível. Crie um grupo primeiro.
-                </p>
-              )}
-            </div>
+
 
             {/* Botões */}
             <div className="flex space-x-3">
