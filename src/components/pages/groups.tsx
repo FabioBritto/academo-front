@@ -4,6 +4,7 @@ import { useSubjectQueries } from '../../api/queries/subject';
 import { useGroupMutations } from '../../api/mutations/group';
 import { CreateGroupModal } from './create-group-modal';
 import { UpdateGroupModal } from './update-group-modal';
+import { ConfirmDeleteGroupModal } from './confirm-delete-group-modal';
 import { toast } from 'sonner';
 import { PlusIcon, Users, BookOpen, Eye, Edit, Trash2 } from 'lucide-react';
 import type { GroupDTO } from '../../api/types/group';
@@ -11,8 +12,10 @@ import type { GroupDTO } from '../../api/types/group';
 export function Grupos() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
   const [groupToEdit, setGroupToEdit] = useState<GroupDTO | null>(null);
+  const [groupToDelete, setGroupToDelete] = useState<GroupDTO | null>(null);
 
 
 
@@ -29,15 +32,22 @@ export function Grupos() {
     return subjects.filter(subject => subject.group?.id === groupId).length;
   };
 
-  const handleDeleteGroup = async (groupId: number, groupName: string) => {
-    if (window.confirm(`Tem certeza que deseja excluir o grupo "${groupName}"?`)) {
-      try {
-        await deleteGroupMutation.mutateAsync(groupId);
-        toast.success('Grupo excluído com sucesso!');
-      } catch (error) {
-        console.error('Erro ao excluir grupo:', error);
-        toast.error('Não foi possível excluir o grupo. Tente novamente.');
-      }
+  const handleDeleteGroup = (group: GroupDTO) => {
+    setGroupToDelete(group);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDeleteGroup = async () => {
+    if (!groupToDelete) return;
+
+    try {
+      await deleteGroupMutation.mutateAsync(groupToDelete.id);
+      toast.success('Grupo excluído com sucesso!');
+      setIsDeleteModalOpen(false);
+      setGroupToDelete(null);
+    } catch (error) {
+      console.error('Erro ao excluir grupo:', error);
+      toast.error('Não foi possível excluir o grupo. Tente novamente.');
     }
   };
 
@@ -60,7 +70,7 @@ export function Grupos() {
           <p className="text-gray-600">Gerencie seus grupos de estudo</p>
         </div>
         
-        <div className="flex space-x-3">
+        <div className="flex flex-col items-end space-y-2">
           <button 
             type="button"
             onClick={() => setIsCreateModalOpen(true)}
@@ -69,6 +79,15 @@ export function Grupos() {
             <PlusIcon className="w-4 h-4 mr-2" />
             Novo Grupo
           </button>
+          
+          {/* Groups Counter */}
+          {!isLoading && groups && groups.length > 0 && (
+            <div className="bg-gray-100 px-3 py-1 rounded-full">
+              <p className="text-sm text-gray-600 font-medium">
+                {groups.length} grupo{groups.length !== 1 ? 's' : ''} encontrado{groups.length !== 1 ? 's' : ''}
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -198,7 +217,7 @@ export function Grupos() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleDeleteGroup(group.id, group.name);
+                              handleDeleteGroup(group);
                             }}
                             disabled={deleteGroupMutation.isPending}
                             className="text-red-600 hover:text-red-800 transition-colors disabled:opacity-50 p-1"
@@ -233,15 +252,6 @@ export function Grupos() {
             </div>
           </div>
         )}
-
-        {/* Groups Count Footer */}
-        {groups && groups.length > 0 && (
-          <div className="bg-gray-50 px-6 py-3 border-t border-gray-200 rounded-b-lg">
-            <p className="text-sm text-gray-600">
-              Total: {groups.length} grupo{groups.length !== 1 ? 's' : ''} encontrado{groups.length !== 1 ? 's' : ''}
-            </p>
-          </div>
-        )}
       </div>
 
       {/* Create Group Modal */}
@@ -255,6 +265,18 @@ export function Grupos() {
         isOpen={isUpdateModalOpen}
         onClose={handleCloseUpdateModal}
         group={groupToEdit}
+      />
+
+      {/* Confirm Delete Group Modal */}
+      <ConfirmDeleteGroupModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setGroupToDelete(null);
+        }}
+        onConfirm={confirmDeleteGroup}
+        group={groupToDelete}
+        isDeleting={deleteGroupMutation.isPending}
       />
     </div>
   );

@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { useSubjectQueries } from '../../api/queries/subject';
 import { useSubjectMutations } from '../../api/mutations/subject';
 import { CreateSubjectModal } from './create-subject-modal';
+import { UpdateSubjectModal } from './update-subject-modal';
 import { AssociateGroupModal } from './associate-group-modal';
+import { ConfirmDeleteSubjectModal } from './confirm-delete-subject-modal';
 import { Button } from '../ui/button';
 import { toast } from 'sonner';
 import { PlusIcon } from 'lucide-react';
@@ -10,9 +12,13 @@ import type { Subject } from '../../api/types/subject';
 
 export function Materias() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [isAssociateGroupModalOpen, setIsAssociateGroupModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedSubjectId, setSelectedSubjectId] = useState<number | null>(null);
+  const [subjectToEdit, setSubjectToEdit] = useState<Subject | null>(null);
   const [subjectToAssociate, setSubjectToAssociate] = useState<Subject | null>(null);
+  const [subjectToDelete, setSubjectToDelete] = useState<Subject | null>(null);
 
   const { useGetSubjects } = useSubjectQueries();
   const { useDeleteSubjectMutation } = useSubjectMutations();
@@ -20,16 +26,33 @@ export function Materias() {
   const { data: subjects = [], isLoading, error, refetch } = useGetSubjects();
   const deleteSubjectMutation = useDeleteSubjectMutation();
 
-  const handleDeleteSubject = async (subjectId: number, subjectName: string) => {
-    if (window.confirm(`Tem certeza que deseja excluir a matéria "${subjectName}"?`)) {
-      try {
-        await deleteSubjectMutation.mutateAsync(subjectId);
-        toast.success('Matéria excluída com sucesso!');
-      } catch (error) {
-        console.error('Erro ao excluir matéria:', error);
-        toast.error('Não foi possível excluir a matéria. Tente novamente.');
-      }
+  const handleDeleteSubject = (subject: Subject) => {
+    setSubjectToDelete(subject);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDeleteSubject = async () => {
+    if (!subjectToDelete) return;
+
+    try {
+      await deleteSubjectMutation.mutateAsync(subjectToDelete.id);
+      toast.success('Matéria excluída com sucesso!');
+      setIsDeleteModalOpen(false);
+      setSubjectToDelete(null);
+    } catch (error) {
+      console.error('Erro ao excluir matéria:', error);
+      toast.error('Não foi possível excluir a matéria. Tente novamente.');
     }
+  };
+
+  const handleEditSubject = (subject: Subject) => {
+    setSubjectToEdit(subject);
+    setIsUpdateModalOpen(true);
+  };
+
+  const handleCloseUpdateModal = () => {
+    setIsUpdateModalOpen(false);
+    setSubjectToEdit(null);
   };
 
   const handleAssociateGroups = (subject: Subject) => {
@@ -46,7 +69,7 @@ export function Materias() {
           <p className="text-gray-600">Gerencie suas matérias acadêmicas</p>
         </div>
         
-        <div className="flex space-x-3">
+        <div className="flex flex-col items-end space-y-2">
           <button 
             type="button"
             onClick={() => setIsCreateModalOpen(true)}
@@ -55,6 +78,15 @@ export function Materias() {
             <PlusIcon className="w-4 h-4 mr-2" />
             Nova Matéria
           </button>
+          
+          {/* Subjects Counter */}
+          {!isLoading && subjects && subjects.length > 0 && (
+            <div className="bg-gray-100 px-3 py-1 rounded-full">
+              <p className="text-sm text-gray-600 font-medium">
+                {subjects.length} matéria{subjects.length !== 1 ? 's' : ''} encontrada{subjects.length !== 1 ? 's' : ''}
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -93,85 +125,138 @@ export function Materias() {
           </div>
         ) : subjects && subjects.length > 0 ? (
           // Subjects Table
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto shadow-sm rounded-lg">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-gradient-to-r from-academo-brown to-academo-sage">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Nome da Matéria
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                    Nome
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
                     Descrição
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-center text-xs font-semibold text-white uppercase tracking-wider">
+                    Grupos Associados
+                  </th>
+                  <th className="px-6 py-4 text-center text-xs font-semibold text-white uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-4 text-center text-xs font-semibold text-white uppercase tracking-wider">
                     Ações
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-gray-100">
                 {subjects.map((subject, index) => (
                   <tr 
                     key={subject.id}
-                    className={`hover:bg-gray-50 transition-colors ${
-                      selectedSubjectId === subject.id ? 'bg-blue-50' : ''
-                    }`}
+                    className="hover:bg-gray-50 transition-all duration-200 group"
                   >
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    {/* Nome */}
+                    <td className="px-6 py-4">
                       <div className="flex items-center">
-                        <div className="flex-shrink-0 h-8 w-8">
-                          <div className="h-8 w-8 rounded-full bg-academo-peach flex items-center justify-center">
-                            <span className="text-sm font-medium text-white">
+                        <div className="flex-shrink-0 h-10 w-10">
+                          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-academo-peach to-academo-sage flex items-center justify-center shadow-sm">
+                            <span className="text-sm font-bold text-white">
                               {subject.name.charAt(0).toUpperCase()}
                             </span>
                           </div>
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-semibold text-gray-900 group-hover:text-academo-brown transition-colors">
                             {subject.name}
                           </div>
-                          <div className="text-sm text-gray-500">
+                          <div className="text-xs text-gray-500">
                             ID: {subject.id}
                           </div>
                         </div>
                       </div>
                     </td>
+
+                    {/* Descrição */}
                     <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">
-                        {subject.description || (
-                          <span className="text-gray-400 italic">
+                      <div className="text-sm text-gray-700 max-w-xs">
+                        {subject.description ? (
+                          <span className="line-clamp-2">{subject.description}</span>
+                        ) : (
+                          <span className="text-gray-400 italic text-xs">
                             Sem descrição
                           </span>
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                      <button
-                        onClick={() => handleAssociateGroups(subject)}
-                        className="text-academo-brown hover:text-academo-sage transition-colors"
-                        title="Associar a grupos"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                      </button>
-                      
-                      <button
-                        className="text-blue-600 hover:text-blue-800 transition-colors"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                      </button>
-                      
-                      <button
-                        onClick={() => handleDeleteSubject(subject.id, subject.name)}
-                        disabled={deleteSubjectMutation.isPending}
-                        className="text-red-600 hover:text-red-800 transition-colors disabled:opacity-50"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
+
+                    {/* Grupos Associados */}
+                    <td className="px-6 py-4 text-center">
+                      <div className="flex justify-center">
+                        {subject.group ? (
+                          <div className="inline-flex items-center">
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-academo-brown to-academo-sage text-white shadow-sm">
+                              <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                              </svg>
+                              {subject.group.name}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500 border border-gray-200">
+                            <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                            </svg>
+                            Nenhum grupo
+                          </span>
+                        )}
+                      </div>
+                    </td>
+
+                    {/* Status */}
+                    <td className="px-6 py-4 text-center">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        subject.isActive 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
+                          subject.isActive ? 'bg-green-400' : 'bg-red-400'
+                        }`}></span>
+                        {subject.isActive ? 'Ativo' : 'Inativo'}
+                      </span>
+                    </td>
+
+                    {/* Ações */}
+                    <td className="px-6 py-4">
+                      <div className="flex justify-center space-x-2">
+                        <button
+                          onClick={() => handleAssociateGroups(subject)}
+                          className="p-2 text-academo-brown hover:text-white hover:bg-academo-brown rounded-lg transition-all duration-200 group/btn"
+                          title="Associar a grupos"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                          </svg>
+                        </button>
+                        
+                        <button
+                          onClick={() => handleEditSubject(subject)}
+                          className="p-2 text-blue-600 hover:text-white hover:bg-blue-600 rounded-lg transition-all duration-200"
+                          title="Editar matéria"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                        
+                        <button
+                          onClick={() => handleDeleteSubject(subject)}
+                          disabled={deleteSubjectMutation.isPending}
+                          className="p-2 text-red-600 hover:text-white hover:bg-red-600 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Excluir matéria"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -199,21 +284,19 @@ export function Materias() {
             </div>
           </div>
         )}
-
-        {/* Subjects Count Footer */}
-        {subjects && subjects.length > 0 && (
-          <div className="bg-gray-50 px-6 py-3 border-t border-gray-200">
-            <p className="text-sm text-gray-600">
-              Total: {subjects.length} matéria{subjects.length !== 1 ? 's' : ''} encontrada{subjects.length !== 1 ? 's' : ''}
-            </p>
-          </div>
-        )}
       </div>
 
       {/* Create Subject Modal */}
       <CreateSubjectModal 
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
+      />
+
+      {/* Update Subject Modal */}
+      <UpdateSubjectModal
+        isOpen={isUpdateModalOpen}
+        onClose={handleCloseUpdateModal}
+        subject={subjectToEdit}
       />
 
       {/* Associate Group Modal */}
@@ -224,6 +307,18 @@ export function Materias() {
           setSubjectToAssociate(null);
         }}
         subject={subjectToAssociate}
+      />
+
+      {/* Confirm Delete Subject Modal */}
+      <ConfirmDeleteSubjectModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setSubjectToDelete(null);
+        }}
+        onConfirm={confirmDeleteSubject}
+        subject={subjectToDelete}
+        isDeleting={deleteSubjectMutation.isPending}
       />
     </div>
   );

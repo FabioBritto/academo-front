@@ -35,24 +35,19 @@ export const useSubjectMutations = () => {
 
     const useUpdateSubjectMutation = () => {
         return useMutation({
-            mutationFn: async ({ subjectId, payload }: { subjectId: number; payload: { name: string; description?: string; isActive?: boolean; groupId?: number } }) => {
+            mutationFn: async ({ payload }: { payload: { id: number; name: string; description?: string; isActive?: boolean;} }) => {
                 const updatePayload: UpdateSubjectDTO = {
-                    id: subjectId,
+                    id: payload.id,
                     name: payload.name,
                     description: payload.description,
                     isActive: payload.isActive,
-                    ...(payload.groupId && {
-                        group: {
-                            id: payload.groupId
-                        }
-                    })
                 };
-                return await subjectsApi.updateSubject(subjectId, updatePayload);
+                return await subjectsApi.updateSubject(updatePayload);
             },
             onSuccess: (data, variables) => {
                 // Invalida as queries de matérias e a matéria específica
                 queryClient.invalidateQueries({ queryKey: ["subjects"] });
-                queryClient.invalidateQueries({ queryKey: ["subject", variables.subjectId] });
+                queryClient.invalidateQueries({ queryKey: ["subject", variables.payload.id] });
             },
             onError: (error) => {
                 return `Não foi possível atualizar a matéria: ${error.message}`;
