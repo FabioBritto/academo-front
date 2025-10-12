@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 import { useGroupQueries } from '../services';
 import { useSubjectQueries } from '../../subjects/services';
 import { useGroupMutations } from '../services';
@@ -10,6 +11,7 @@ import { PlusIcon, Users, BookOpen, Eye, Edit, Trash2 } from 'lucide-react';
 import type { GroupDTO } from '../types/group';
 
 export function Grupos() {
+  const navigate = useNavigate();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -59,6 +61,11 @@ export function Grupos() {
   const handleCloseUpdateModal = () => {
     setIsUpdateModalOpen(false);
     setGroupToEdit(null);
+  };
+
+  const handleViewGroup = (groupId: number) => {
+    console.log('groupId', groupId);
+    navigate({ to: '/app/grupos/$groupId', params: { groupId: String(groupId) } });
   };
 
   return (
@@ -134,7 +141,7 @@ export function Grupos() {
                     className={`bg-white border rounded-lg p-6 hover:shadow-md transition-all duration-200 cursor-pointer ${
                       selectedGroupId === group.id ? 'ring-2 ring-academo-brown border-academo-brown' : 'border-gray-200'
                     }`}
-                    onClick={() => setSelectedGroupId(selectedGroupId === group.id ? null : group.id)}
+                    onClick={() => handleViewGroup(group.id)}
                   >
                     {/* Card Header */}
                     <div className="flex items-start justify-between mb-4">
@@ -194,7 +201,7 @@ export function Grupos() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setSelectedGroupId(selectedGroupId === group.id ? null : group.id);
+                            handleViewGroup(group.id);
                           }}
                           className="text-academo-brown hover:text-academo-sage transition-colors p-1"
                           title="Visualizar detalhes"

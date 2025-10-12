@@ -61,7 +61,7 @@ export const useSubjectMutations = () => {
                 return await subjectsApi.deleteSubject(subjectId);
             },
             onSuccess: (_data, subjectId) => {
-                // Invalida as queries de matérias e remove a matéria específica do cache
+                // Invalida todas as queries de matérias (incluindo as queries por grupo)
                 queryClient.invalidateQueries({ queryKey: ["subjects"] });
                 queryClient.removeQueries({ queryKey: ["subject", subjectId] });
             },
@@ -95,8 +95,17 @@ export const useSubjectQueries = () => {
         });
     };
 
+    const useGetSubjectsByGroup = (groupId: number) => {
+        return useQuery({
+            queryKey: ['subjects', groupId],
+            queryFn: () => subjectsApi.getSubjectsByGroup(groupId),
+            enabled: !!groupId, // Só executa se groupId estiver definido
+        });
+    };
+
     return {
         useGetSubjects,
-        useGetSubjectById
+        useGetSubjectById,
+        useGetSubjectsByGroup
     };
 };

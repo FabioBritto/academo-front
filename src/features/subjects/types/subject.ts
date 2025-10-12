@@ -47,6 +47,11 @@ export const subjectsApi = {
         return response.data;
     },
 
+    getSubjectsByGroup: async (groupId: number) => {
+        const response = await api.get<Subject[]>(`/subjects/by-group?groupId=${groupId}`);
+        return response.data;
+    },
+
     // POST /subjects - Cria uma nova matéria
     createSubject: async (payload: CreateSubjectDTO) => {
         const subjectPayload = {
