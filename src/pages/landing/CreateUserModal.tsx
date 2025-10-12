@@ -26,6 +26,7 @@ export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalPro
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const { useCreateUserMutation } = useUserMutations();
   const createUserMutation = useCreateUserMutation();
 
@@ -78,13 +79,15 @@ export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalPro
         password: formData.password,
       };
       await createUserMutation.mutateAsync(createUserDTO);
-      toast.success('Usuário criado com sucesso!');
       
-      onClose();
+      // Zera os campos do formulário
       setFormData({ name: '', email: '', password: '', confirmPassword: '' });
       setErrors({ name: '', email: '', password: '', confirmPassword: '' });
       setShowPassword(false);
       setShowConfirmPassword(false);
+      
+      // Mostra a mensagem de sucesso dentro do modal
+      setShowSuccessMessage(true);
     } catch (error) {
       console.error('Erro ao criar usuário:', error);
       toast.error(error as string);
@@ -109,6 +112,7 @@ export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalPro
       setErrors({ name: '', email: '', password: '', confirmPassword: '' });
       setShowPassword(false);
       setShowConfirmPassword(false);
+      setShowSuccessMessage(false);
     }
   };
 
@@ -134,7 +138,7 @@ export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalPro
           <div className="bg-academo-brown px-6 py-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-white">
-                Criar Nova Conta
+                {showSuccessMessage ? 'Conta Criada!' : 'Criar Nova Conta'}
               </h3>
               <button
                 onClick={handleClose}
@@ -147,12 +151,45 @@ export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalPro
               </button>
             </div>
             <p className="text-indigo-100 text-sm mt-1">
-              Preencha os dados abaixo para criar sua conta
+              {showSuccessMessage 
+                ? 'Sua conta foi criada com sucesso!'
+                : 'Preencha os dados abaixo para criar sua conta'}
             </p>
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="px-6 py-6">
+          {/* Success Message */}
+          {showSuccessMessage ? (
+            <div className="px-6 py-8">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
+                <div className="flex items-start">
+                  <div className="flex-shrink-0">
+                    <svg className="h-8 w-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-green-800">
+                      Usuário criado com sucesso!
+                    </h3>
+                    <div className="mt-2 text-sm text-green-700">
+                      <p>
+                        Verifique o seu email para encontrar o link de ativação da sua conta.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <button
+                onClick={handleClose}
+                className="w-full px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-academo-brown hover:bg-academo-sage focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-academo-brown transition-colors"
+              >
+                Fechar
+              </button>
+            </div>
+          ) : (
+            /* Form */
+            <form onSubmit={handleSubmit} className="px-6 py-6">
 
             <div className="mb-4">
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
@@ -307,8 +344,10 @@ export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalPro
               </button>
             </div>
           </form>
+          )}
 
           {/* Footer */}
+          {!showSuccessMessage && (
           <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
             <div className="space-y-3">
             <p className="text-xs text-gray-500 text-center">
@@ -332,6 +371,7 @@ export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalPro
               </p>
             </div>
           </div>
+          )}
         </div>
       </div>
     </div>
