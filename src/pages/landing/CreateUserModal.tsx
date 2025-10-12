@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useUserMutations } from '../../features/auth/services';
-import { toast } from 'sonner'
 
 interface CreateUserModalProps {
   isOpen: boolean;
@@ -27,6 +26,7 @@ export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalPro
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>('');
   const { useCreateUserMutation } = useUserMutations();
   const createUserMutation = useCreateUserMutation();
 
@@ -79,6 +79,8 @@ export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalPro
         password: formData.password,
       };
       await createUserMutation.mutateAsync(createUserDTO);
+
+
       
       // Zera os campos do formulário
       setFormData({ name: '', email: '', password: '', confirmPassword: '' });
@@ -88,9 +90,17 @@ export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalPro
       
       // Mostra a mensagem de sucesso dentro do modal
       setShowSuccessMessage(true);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao criar usuário:', error);
-      toast.error(error as string);
+      
+      let errorMsg = 'Não foi possível criar a conta.';
+      
+      if (error?.response?.data) {
+        errorMsg = error.response.data;
+      }
+      
+      // Define a mensagem de erro para exibir no modal
+      setErrorMessage(errorMsg);
     } finally {
       setIsLoading(false);
     }
@@ -113,6 +123,7 @@ export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalPro
       setShowPassword(false);
       setShowConfirmPassword(false);
       setShowSuccessMessage(false);
+      setErrorMessage('');
     }
   };
 
@@ -135,10 +146,14 @@ export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalPro
       <div className="flex min-h-full items-center justify-center p-4">
         <div className="relative w-full max-w-md transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all">
           {/* Header */}
-          <div className="bg-academo-brown px-6 py-4">
+          <div className={`px-6 py-4 ${errorMessage ? 'bg-red-600' : 'bg-academo-brown'}`}>
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-white">
-                {showSuccessMessage ? 'Conta Criada!' : 'Criar Nova Conta'}
+                {errorMessage 
+                  ? 'Erro ao Criar Conta' 
+                  : showSuccessMessage 
+                    ? 'Conta Criada!' 
+                    : 'Criar Nova Conta'}
               </h3>
               <button
                 onClick={handleClose}
@@ -151,9 +166,11 @@ export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalPro
               </button>
             </div>
             <p className="text-indigo-100 text-sm mt-1">
-              {showSuccessMessage 
-                ? 'Sua conta foi criada com sucesso!'
-                : 'Preencha os dados abaixo para criar sua conta'}
+              {errorMessage
+                ? 'Não foi possível criar sua conta'
+                : showSuccessMessage 
+                  ? 'Sua conta foi criada com sucesso!'
+                  : 'Preencha os dados abaixo para criar sua conta'}
             </p>
           </div>
 
@@ -185,6 +202,36 @@ export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalPro
                 className="w-full px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-academo-brown hover:bg-academo-sage focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-academo-brown transition-colors"
               >
                 Fechar
+              </button>
+            </div>
+          ) : errorMessage ? (
+            /* Error Message */
+            <div className="px-6 py-8">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
+                <div className="flex items-start">
+                  <div className="flex-shrink-0">
+                    <svg className="h-8 w-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-red-800">
+                      Erro ao criar conta
+                    </h3>
+                    <div className="mt-2 text-sm text-red-700">
+                      <p>
+                        {errorMessage}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <button
+                onClick={() => setErrorMessage('')}
+                className="w-full px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-600 transition-colors"
+              >
+                Tentar Novamente
               </button>
             </div>
           ) : (
@@ -347,7 +394,7 @@ export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalPro
           )}
 
           {/* Footer */}
-          {!showSuccessMessage && (
+          {!showSuccessMessage && !errorMessage && (
           <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
             <div className="space-y-3">
             <p className="text-xs text-gray-500 text-center">
