@@ -35,7 +35,7 @@ export const useSubjectMutations = () => {
 
     const useUpdateSubjectMutation = () => {
         return useMutation({
-            mutationFn: async ({ payload }: { payload: { id: number; name: string; description?: string; isActive?: boolean;} }) => {
+            mutationFn: async ({ payload }: { payload: { id: number; name: string; description?: string; isActive: boolean;} }) => {
                 const updatePayload: UpdateSubjectDTO = {
                     id: payload.id,
                     name: payload.name,
