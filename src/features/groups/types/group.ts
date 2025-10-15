@@ -28,6 +28,11 @@ export interface UpdateGroupDTO {
     isActive?: boolean;
 }
 
+export interface RemoveSubjectDTO {
+    groupId: number;
+    subjectId: number;
+}
+
 export interface AssociateSubjectsDTO {
     groupId: number;
     subjectsIds: number[];
@@ -62,6 +67,11 @@ export const groupsApi = {
     // PUT /groups/{groupId} - Atualiza um grupo
     updateGroup: async (payload: UpdateGroupDTO) => {
         const response = await api.put<Group>(`/groups`, payload);
+        return response.data;
+    },
+
+    removeSubject: async (payload: RemoveSubjectDTO) => {
+        const response = await api.put<Group>(`/groups/remove-subject`, payload);
         return response.data;
     },
 

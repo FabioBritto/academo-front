@@ -2,15 +2,14 @@ import { useState } from 'react';
 import { useParams, useNavigate } from '@tanstack/react-router';
 import { useGroupQueries, useGroupMutations } from '../services';
 import { useSubjectQueries } from '../../subjects/services';
-import { useSubjectMutations } from '../../subjects/services';
 import { UpdateSubjectModal } from '../../subjects/components/update-subject-modal';
 import { AssociateGroupModal } from './associate-group-modal';
-import { ConfirmDeleteSubjectModal } from '../../subjects/components/confirm-delete-subject-modal';
 import { AddSubjectsToGroupModal } from './add-subjects-to-group-modal';
 import { UpdateGroupModal } from './update-group-modal';
 import { ConfirmDeleteGroupModal } from './confirm-delete-group-modal';
+import { ConfirmRemoveSubjectModal } from './confirm-remove-subject-modal';
 import { toast } from 'sonner';
-import { ArrowLeft, Users, BookOpen, Edit, Trash2, PlusIcon } from 'lucide-react';
+import { ArrowLeft, Users, BookOpen, Edit, Trash2, PlusIcon, Minus } from 'lucide-react';
 import type { Subject } from '../../subjects/types/subject';
 
 export function GroupDetails() {
@@ -19,23 +18,22 @@ export function GroupDetails() {
   
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [isAssociateGroupModalOpen, setIsAssociateGroupModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isAddSubjectsModalOpen, setIsAddSubjectsModalOpen] = useState(false);
   const [isUpdateGroupModalOpen, setIsUpdateGroupModalOpen] = useState(false);
   const [isDeleteGroupModalOpen, setIsDeleteGroupModalOpen] = useState(false);
+  const [isRemoveSubjectModalOpen, setIsRemoveSubjectModalOpen] = useState(false);
   const [subjectToEdit, setSubjectToEdit] = useState<Subject | null>(null);
   const [subjectToAssociate, setSubjectToAssociate] = useState<Subject | null>(null);
-  const [subjectToDelete, setSubjectToDelete] = useState<Subject | null>(null);
+  const [subjectToRemove, setSubjectToRemove] = useState<Subject | null>(null);
 
   const { useGetGroupById } = useGroupQueries();
   const { useGetSubjectsByGroup } = useSubjectQueries();
-  const { useDeleteSubjectMutation } = useSubjectMutations();
-  const { useDeleteGroupMutation } = useGroupMutations();
+  const { useDeleteGroupMutation, useRemoveSubjectMutation } = useGroupMutations();
   
   const { data: group, isLoading: isLoadingGroup, error: groupError } = useGetGroupById(Number(groupId));
   const { data: subjects = [], isLoading: isLoadingSubjects } = useGetSubjectsByGroup(Number(groupId));
-  const deleteSubjectMutation = useDeleteSubjectMutation();
   const deleteGroupMutation = useDeleteGroupMutation();
+  const removeSubjectMutation = useRemoveSubjectMutation();
 
   const handleEditGroup = () => {
     setIsUpdateGroupModalOpen(true);
@@ -58,29 +56,26 @@ export function GroupDetails() {
     }
   };
 
-  const handleDeleteSubject = (subject: Subject) => {
-    setSubjectToDelete(subject);
-    setIsDeleteModalOpen(true);
+  const handleRemoveSubject = (subject: Subject) => {
+    setSubjectToRemove(subject);
+    setIsRemoveSubjectModalOpen(true);
   };
 
-  const confirmDeleteSubject = async () => {
-    if (!subjectToDelete) return;
+  const confirmRemoveSubject = async () => {
+    if (!subjectToRemove || !group) return;
 
     try {
-      await deleteSubjectMutation.mutateAsync(subjectToDelete.id);
-      toast.success('Matéria excluída com sucesso!');
-      setIsDeleteModalOpen(false);
-      setSubjectToDelete(null);
+      await removeSubjectMutation.mutateAsync({
+        groupId: group.id,
+        subjectId: subjectToRemove.id
+      });
+      setIsRemoveSubjectModalOpen(false);
+      setSubjectToRemove(null);
     } catch (error) {
-      console.error('Erro ao excluir matéria:', error);
-      toast.error('Não foi possível excluir a matéria. Tente novamente.');
+      console.error('Erro ao remover matéria do grupo:', error);
     }
   };
 
-  const handleEditSubject = (subject: Subject) => {
-    setSubjectToEdit(subject);
-    setIsUpdateModalOpen(true);
-  };
 
   const handleCloseUpdateModal = () => {
     setIsUpdateModalOpen(false);
@@ -341,22 +336,14 @@ export function GroupDetails() {
 
                     {/* Ações */}
                     <td className="px-6 py-4">
-                      <div className="flex justify-center space-x-2">
+                      <div className="flex justify-center space-x-2">    
                         <button
-                          onClick={() => handleEditSubject(subject)}
-                          className="p-2 text-blue-600 hover:text-white hover:bg-blue-600 rounded-lg transition-all duration-200"
-                          title="Editar matéria"
+                          onClick={() => handleRemoveSubject(subject)}
+                          disabled={removeSubjectMutation.isPending}
+                          className="p-2 text-orange-600 hover:text-white hover:bg-orange-600 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Remover matéria do grupo"
                         >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        
-                        <button
-                          onClick={() => handleDeleteSubject(subject)}
-                          disabled={deleteSubjectMutation.isPending}
-                          className="p-2 text-red-600 hover:text-white hover:bg-red-600 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                          title="Excluir matéria"
-                        >
-                          <Trash2 className="w-4 h-4" />
+                          <Minus className="w-4 h-4" />
                         </button>
                       </div>
                     </td>
@@ -399,17 +386,6 @@ export function GroupDetails() {
         subject={subjectToAssociate}
       />
 
-      {/* Confirm Delete Subject Modal */}
-      <ConfirmDeleteSubjectModal
-        isOpen={isDeleteModalOpen}
-        onClose={() => {
-          setIsDeleteModalOpen(false);
-          setSubjectToDelete(null);
-        }}
-        onConfirm={confirmDeleteSubject}
-        subject={subjectToDelete}
-        isDeleting={deleteSubjectMutation.isPending}
-      />
 
       {/* Add Subjects to Group Modal */}
       <AddSubjectsToGroupModal
@@ -433,6 +409,18 @@ export function GroupDetails() {
         onConfirm={confirmDeleteGroup}
         group={group}
         isDeleting={deleteGroupMutation.isPending}
+      />
+
+      {/* Confirm Remove Subject Modal */}
+      <ConfirmRemoveSubjectModal
+        isOpen={isRemoveSubjectModalOpen}
+        onClose={() => {
+          setIsRemoveSubjectModalOpen(false);
+          setSubjectToRemove(null);
+        }}
+        onConfirm={confirmRemoveSubject}
+        subject={subjectToRemove}
+        isRemoving={removeSubjectMutation.isPending}
       />
     </div>
   );

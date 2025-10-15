@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-import type { AssociateSubjectsDTO, CreateGroupDTO, UpdateGroupDTO } from "../types/group";
+import type { AssociateSubjectsDTO, CreateGroupDTO, RemoveSubjectDTO, UpdateGroupDTO } from "../types/group";
 import { groupsApi } from "../types/group";
 import { toast } from "sonner";
 
@@ -56,6 +56,25 @@ export const useGroupMutations = () => {
         });
     };
 
+    const useRemoveSubjectMutation = () => {
+
+        return useMutation({
+            mutationFn: async (payload: RemoveSubjectDTO) => {
+                return await groupsApi.removeSubject(payload);
+            },
+            onSuccess: (_data, variables) => {
+                queryClient.invalidateQueries({ queryKey: ["groups"] });
+                queryClient.invalidateQueries({ queryKey: ["group", variables.groupId] });
+                queryClient.invalidateQueries({ queryKey: ["subjects", variables.groupId] });
+                queryClient.invalidateQueries({ queryKey: ["subjects"] });
+                toast.success('Matéria removida do grupo com sucesso!');
+            },
+            onError: (error) => {
+                toast.error(`Não foi possível remover a matéria do grupo: ${error.message}`);
+            }
+        });
+    };
+
     const useDeleteGroupMutation = () => {
         return useMutation({
             mutationFn: async (groupId: number) => {
@@ -76,7 +95,8 @@ export const useGroupMutations = () => {
         useCreateGroupMutation,
         useUpdateGroupMutation,
         useDeleteGroupMutation,
-        useAssociateSubjectsMutation
+        useAssociateSubjectsMutation,
+        useRemoveSubjectMutation
     };
 };
 
