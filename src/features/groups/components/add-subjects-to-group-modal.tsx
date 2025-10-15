@@ -3,6 +3,7 @@ import { useSubjectQueries } from '../../subjects/services';
 import { toast } from 'sonner';
 import type { Subject } from '../../subjects/types/subject';
 import { useGroupMutations } from '../services';
+import { CreateSubjectModal } from '../../subjects/components/create-subject-modal';
 
 interface AddSubjectsToGroupModalProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ export function AddSubjectsToGroupModal({ isOpen, onClose, groupId, currentSubje
   const [selectedSubjects, setSelectedSubjects] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   
   const { useGetSubjects } = useSubjectQueries();
   const { data: allSubjects = [], isLoading: isLoadingSubjects } = useGetSubjects();
@@ -133,9 +135,9 @@ export function AddSubjectsToGroupModal({ isOpen, onClose, groupId, currentSubje
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="px-6 py-6">
-            {/* Search Bar */}
-            <div className="mb-4">
-              <div className="relative">
+            {/* Search Bar and Create Button */}
+            <div className="mb-4 flex gap-3">
+              <div className="relative flex-1">
                 <input
                   type="text"
                   value={searchTerm}
@@ -153,6 +155,17 @@ export function AddSubjectsToGroupModal({ isOpen, onClose, groupId, currentSubje
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
+              <button
+                type="button"
+                onClick={() => setIsCreateModalOpen(true)}
+                disabled={isLoading}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition duration-200 flex items-center whitespace-nowrap disabled:opacity-50"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Nova Matéria
+              </button>
             </div>
 
             {/* Select All Button */}
@@ -282,6 +295,13 @@ export function AddSubjectsToGroupModal({ isOpen, onClose, groupId, currentSubje
           </form>
         </div>
       </div>
+
+      {/* Create Subject Modal */}
+      <CreateSubjectModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        groupId={groupId}
+      />
     </div>
   );
 }

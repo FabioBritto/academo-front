@@ -5,9 +5,10 @@ import { toast } from 'sonner';
 interface CreateSubjectModalProps {
   isOpen: boolean;
   onClose: () => void;
+  groupId?: number;
 }
 
-export function CreateSubjectModal({ isOpen, onClose }: CreateSubjectModalProps) {
+export function CreateSubjectModal({ isOpen, onClose, groupId }: CreateSubjectModalProps) {
   const [formData, setFormData] = useState({
     name: '',
     description: ''
@@ -55,7 +56,8 @@ export function CreateSubjectModal({ isOpen, onClose }: CreateSubjectModalProps)
       const payload = {
         name: formData.name.trim(),
         description: formData.description.trim() || undefined,
-        userId: userId
+        userId: userId,
+        ...(groupId && { groupId })
       };
       
       await createSubjectMutation.mutateAsync(payload);
@@ -117,7 +119,9 @@ export function CreateSubjectModal({ isOpen, onClose }: CreateSubjectModalProps)
               </button>
             </div>
             <p className="text-orange-100 text-sm mt-1">
-              Preencha os dados abaixo para criar uma nova matéria acadêmica
+              {groupId 
+                ? 'A matéria será criada e adicionada ao grupo automaticamente'
+                : 'Preencha os dados abaixo para criar uma nova matéria acadêmica'}
             </p>
           </div>
 
