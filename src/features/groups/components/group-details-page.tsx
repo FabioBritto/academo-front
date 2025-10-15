@@ -235,18 +235,27 @@ export function GroupDetails() {
       </div>
 
       {/* Lista de Matérias */}
-      <div className="bg-white rounded-lg shadow-sm border">
+      <div className={`bg-white rounded-lg shadow-sm border ${!group.isActive ? 'opacity-60' : ''}`}>
         <div className="px-6 py-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold text-gray-900">Matérias do Grupo</h3>
               <p className="text-sm text-gray-600 mt-1">
-                Lista de matérias associadas a este grupo
+                {!group.isActive 
+                  ? 'Grupo inativo - Não é possível gerenciar matérias'
+                  : 'Lista de matérias associadas a este grupo'
+                }
               </p>
             </div>
             <button
               onClick={() => setIsAddSubjectsModalOpen(true)}
-              className="bg-academo-brown hover:bg-academo-sage text-white px-4 py-2 rounded-lg font-medium transition duration-300 flex items-center"
+              disabled={!group.isActive}
+              className={`px-4 py-2 rounded-lg font-medium transition duration-300 flex items-center ${
+                group.isActive 
+                  ? 'bg-academo-brown hover:bg-academo-sage text-white' 
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              }`}
+              title={!group.isActive ? 'Grupo inativo - Não é possível adicionar matérias' : 'Adicionar matérias ao grupo'}
             >
               <PlusIcon className="w-4 h-4 mr-2" />
               Adicionar Matérias
@@ -339,9 +348,13 @@ export function GroupDetails() {
                       <div className="flex justify-center space-x-2">    
                         <button
                           onClick={() => handleRemoveSubject(subject)}
-                          disabled={removeSubjectMutation.isPending}
-                          className="p-2 text-orange-600 hover:text-white hover:bg-orange-600 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                          title="Remover matéria do grupo"
+                          disabled={removeSubjectMutation.isPending || !group.isActive}
+                          className={`p-2 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+                            group.isActive 
+                              ? 'text-orange-600 hover:text-white hover:bg-orange-600' 
+                              : 'text-gray-400 cursor-not-allowed'
+                          }`}
+                          title={!group.isActive ? 'Grupo inativo - Não é possível remover matérias' : 'Remover matéria do grupo'}
                         >
                           <Minus className="w-4 h-4" />
                         </button>
@@ -359,10 +372,13 @@ export function GroupDetails() {
                 <BookOpen className="w-8 h-8 text-gray-400" />
               </div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Nenhuma matéria encontrada
+                {!group.isActive ? 'Grupo Inativo' : 'Nenhuma matéria encontrada'}
               </h3>
               <p className="text-gray-600 text-sm">
-                Este grupo ainda não possui matérias associadas.
+                {!group.isActive 
+                  ? 'Este grupo está inativo e não é possível gerenciar matérias.'
+                  : 'Este grupo ainda não possui matérias associadas.'
+                }
               </p>
             </div>
           </div>
