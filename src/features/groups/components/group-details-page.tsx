@@ -60,11 +60,6 @@ export function GroupDetails() {
     setSubjectToEdit(null);
   };
 
-  const handleAssociateGroups = (subject: Subject) => {
-    setSubjectToAssociate(subject);
-    setIsAssociateGroupModalOpen(true);
-  };
-
   const handleGoBack = () => {
     navigate({ to: '/app/grupos' });
   };
@@ -298,14 +293,6 @@ export function GroupDetails() {
                     {/* Ações */}
                     <td className="px-6 py-4">
                       <div className="flex justify-center space-x-2">
-                        <button
-                          onClick={() => handleAssociateGroups(subject)}
-                          className="p-2 text-academo-brown hover:text-white hover:bg-academo-brown rounded-lg transition-all duration-200"
-                          title="Associar a grupos"
-                        >
-                          <Users className="w-4 h-4" />
-                        </button>
-                        
                         <button
                           onClick={() => handleEditSubject(subject)}
                           className="p-2 text-blue-600 hover:text-white hover:bg-blue-600 rounded-lg transition-all duration-200"
