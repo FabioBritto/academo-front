@@ -28,6 +28,11 @@ export interface UpdateGroupDTO {
     isActive?: boolean;
 }
 
+export interface AssociateSubjectsDTO {
+    groupId: number;
+    subjectsIds: number[];
+}
+
 export const groupsApi = {
     // GET /groups/all/{userId} - Lista todos os grupos
     getGroups: async () => {
@@ -37,7 +42,14 @@ export const groupsApi = {
 
     // GET /groups/{groupId} - Busca um grupo específico
     getGroupById: async (groupId: number) => {
-        const response = await api.get<Group>(`/groups/${groupId}`);
+        const response = await api.get<Group>(`/groups?groupId=${groupId}`);
+        return response.data;
+    },
+
+    associateSubjects: async (associateSubjectsDTO: AssociateSubjectsDTO) => {
+        console.log('associateSubjectsDTO', associateSubjectsDTO);
+        const response = await api.put<Group>(`/groups/associate-subjects`, associateSubjectsDTO);
+        console.log('response', response);
         return response.data;
     },
 

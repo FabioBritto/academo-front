@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-import type { CreateGroupDTO, UpdateGroupDTO } from "../types/group";
+import type { AssociateSubjectsDTO, CreateGroupDTO, UpdateGroupDTO } from "../types/group";
 import { groupsApi } from "../types/group";
 import { toast } from "sonner";
 
@@ -38,6 +38,23 @@ export const useGroupMutations = () => {
         });
     };
 
+    const useAssociateSubjectsMutation = () => {
+        return useMutation({
+            mutationFn: async (payload: AssociateSubjectsDTO) => {
+                return await groupsApi.associateSubjects(payload);
+            },
+            onSuccess: (_data, variables) => {
+                // Invalida as queries de grupos e as matérias do grupo específico
+                queryClient.invalidateQueries({ queryKey: ["groups"] });
+                queryClient.invalidateQueries({ queryKey: ["subjects", variables.groupId] });
+                queryClient.invalidateQueries({ queryKey: ["subjects"] });
+            },
+            onError: (error) => {
+                return `Não foi possível associar as matérias: ${error.message}`;
+            }
+        });
+    };
+
     const useDeleteGroupMutation = () => {
         return useMutation({
             mutationFn: async (groupId: number) => {
@@ -57,7 +74,8 @@ export const useGroupMutations = () => {
     return {
         useCreateGroupMutation,
         useUpdateGroupMutation,
-        useDeleteGroupMutation
+        useDeleteGroupMutation,
+        useAssociateSubjectsMutation
     };
 };
 

@@ -31,7 +31,7 @@ export interface UpdateSubjectDTO {
     id: number;
     name: string;
     description?: string;
-    isActive?: boolean;
+    isActive: boolean;
 }
 
 export const subjectsApi = {
@@ -44,6 +44,11 @@ export const subjectsApi = {
     // GET /subjects/{subjectId} - Busca uma matéria específica
     getSubjectById: async (subjectId: number) => {
         const response = await api.get<Subject>(`/subjects/${subjectId}`);
+        return response.data;
+    },
+
+    getSubjectsByGroup: async (groupId: number) => {
+        const response = await api.get<Subject[]>(`/subjects/by-group?groupId=${groupId}`);
         return response.data;
     },
 
@@ -73,6 +78,7 @@ export const subjectsApi = {
             description: payload.description || "",
             isActive: payload.isActive,
         };
+        console.log('updatePayload', updatePayload);
         const response = await api.put<Subject>(`/subjects`, updatePayload);
         return response.data;
     },

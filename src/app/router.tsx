@@ -3,6 +3,7 @@ import Landing from '../pages/landing/landing';
 import { Home } from '../features/home/components/home-page';
 import { About } from '../pages/about/about';
 import { Grupos } from '../features/groups/components/groups-page';
+import { GroupDetails } from '../features/groups/components/group-details-page';
 import { Materias } from '../features/subjects/components/subjects-page';
 import { Atividades } from '../features/activities/components/activities-page';
 import { RootLayout } from '../shared/components/layout/root-layout';
@@ -77,6 +78,12 @@ const gruposRoute = createRoute({
   component: Grupos,
 });
 
+const groupDetailsRoute = createRoute({
+  getParentRoute: () => authRoute,
+  path: '/grupos/$groupId',
+  component: GroupDetails,
+});
+
 const materiasRoute = createRoute({
   getParentRoute: () => authRoute,
   path: '/materias',
@@ -101,6 +108,7 @@ const routeTree = rootRoute.addChildren([
   authRoute.addChildren([
     homeRoute,
     gruposRoute,
+    groupDetailsRoute,
     materiasRoute,
     atividadesRoute
   ])

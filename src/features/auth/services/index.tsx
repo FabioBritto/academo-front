@@ -80,7 +80,7 @@ export const useUserMutations = () => {
     const useCreateUserMutation = () => {
         return useMutation({
             mutationFn: async (payload: CreateUserDTO) => {
-                return (await usersApi.createUser(payload));
+                return await usersApi.createUser(payload);
             },
             onSuccess: () => {
                 queryClient.invalidateQueries({ queryKey: ["user"] });
@@ -109,16 +109,4 @@ export const useUserMutations = () => {
         useCreateUserMutation,
         useLoginMutation
     }
-}
-
-export const useUserQuery = () => {
-
-    // const useGetUser = (userId: number) => {
-    //     return useQuery({
-    //         queryKey: ['user', userId],
-    //         queryFn: () => (
-    //             await api.get<User>()
-    //         )
-    //     })
-    // }
 }
