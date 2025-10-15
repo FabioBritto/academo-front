@@ -27,9 +27,10 @@ export const useGroupMutations = () => {
             mutationFn: async (payload: UpdateGroupDTO) => {
                 return await groupsApi.updateGroup(payload);
             },
-            onSuccess: () => {
+            onSuccess: (_data, variables) => {
                 // Invalida as queries de grupos e o grupo específico
                 queryClient.invalidateQueries({ queryKey: ["groups"] });
+                queryClient.invalidateQueries({ queryKey: ["group", variables.id] });
                 toast.success('Grupo atualizado com sucesso!');
             },
             onError: () => {

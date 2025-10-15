@@ -34,8 +34,7 @@ export function Header({ children }: HeaderProps) {
                 }`}>
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-2xl font-bold text-academo-brown">Dashboard</h1>
-                            <p className="text-sm text-gray-600">Bem-vindo ao Academo</p>
+                            <h1 className="text-2xl font-bold text-academo-brown">Academo - O seu gerenciador acadêmico</h1>
                         </div>
                         
                         {/* User Menu */}

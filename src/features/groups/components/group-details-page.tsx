@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from '@tanstack/react-router';
-import { useGroupQueries } from '../services';
+import { useGroupQueries, useGroupMutations } from '../services';
 import { useSubjectQueries } from '../../subjects/services';
 import { useSubjectMutations } from '../../subjects/services';
 import { UpdateSubjectModal } from '../../subjects/components/update-subject-modal';
 import { AssociateGroupModal } from './associate-group-modal';
 import { ConfirmDeleteSubjectModal } from '../../subjects/components/confirm-delete-subject-modal';
 import { AddSubjectsToGroupModal } from './add-subjects-to-group-modal';
+import { UpdateGroupModal } from './update-group-modal';
+import { ConfirmDeleteGroupModal } from './confirm-delete-group-modal';
 import { toast } from 'sonner';
 import { ArrowLeft, Users, BookOpen, Edit, Trash2, PlusIcon } from 'lucide-react';
 import type { Subject } from '../../subjects/types/subject';
@@ -19,6 +21,8 @@ export function GroupDetails() {
   const [isAssociateGroupModalOpen, setIsAssociateGroupModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isAddSubjectsModalOpen, setIsAddSubjectsModalOpen] = useState(false);
+  const [isUpdateGroupModalOpen, setIsUpdateGroupModalOpen] = useState(false);
+  const [isDeleteGroupModalOpen, setIsDeleteGroupModalOpen] = useState(false);
   const [subjectToEdit, setSubjectToEdit] = useState<Subject | null>(null);
   const [subjectToAssociate, setSubjectToAssociate] = useState<Subject | null>(null);
   const [subjectToDelete, setSubjectToDelete] = useState<Subject | null>(null);
@@ -26,10 +30,33 @@ export function GroupDetails() {
   const { useGetGroupById } = useGroupQueries();
   const { useGetSubjectsByGroup } = useSubjectQueries();
   const { useDeleteSubjectMutation } = useSubjectMutations();
+  const { useDeleteGroupMutation } = useGroupMutations();
   
   const { data: group, isLoading: isLoadingGroup, error: groupError } = useGetGroupById(Number(groupId));
   const { data: subjects = [], isLoading: isLoadingSubjects } = useGetSubjectsByGroup(Number(groupId));
   const deleteSubjectMutation = useDeleteSubjectMutation();
+  const deleteGroupMutation = useDeleteGroupMutation();
+
+  const handleEditGroup = () => {
+    setIsUpdateGroupModalOpen(true);
+  };
+
+  const handleDeleteGroup = () => {
+    setIsDeleteGroupModalOpen(true);
+  };
+
+  const confirmDeleteGroup = async () => {
+    if (!group) return;
+
+    try {
+      await deleteGroupMutation.mutateAsync(group.id);
+      toast.success('Grupo excluído com sucesso!');
+      navigate({ to: '/app/grupos' });
+    } catch (error) {
+      console.error('Erro ao excluir grupo:', error);
+      toast.error('Não foi possível excluir o grupo. Tente novamente.');
+    }
+  };
 
   const handleDeleteSubject = (subject: Subject) => {
     setSubjectToDelete(subject);
@@ -157,13 +184,35 @@ export function GroupDetails() {
             </div>
           </div>
           
-          {/* Status Badge */}
-          <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-            group.isActive 
-              ? 'bg-green-100 text-green-800' 
-              : 'bg-gray-100 text-gray-800'
-          }`}>
-            {group.isActive ? 'Ativo' : 'Inativo'}
+          {/* Status Badge e Botões de Ação */}
+          <div className="flex items-center space-x-3">
+            <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+              group.isActive 
+                ? 'bg-green-100 text-green-800' 
+                : 'bg-gray-100 text-gray-800'
+            }`}>
+              {group.isActive ? 'Ativo' : 'Inativo'}
+            </div>
+            
+            {/* Botões de Edição e Exclusão */}
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={handleEditGroup}
+                className="p-2 text-blue-600 hover:text-white hover:bg-blue-600 rounded-lg transition-all duration-200"
+                title="Editar grupo"
+              >
+                <Edit className="w-5 h-5" />
+              </button>
+              
+              <button
+                onClick={handleDeleteGroup}
+                disabled={deleteGroupMutation.isPending}
+                className="p-2 text-red-600 hover:text-white hover:bg-red-600 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Excluir grupo"
+              >
+                <Trash2 className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -368,6 +417,22 @@ export function GroupDetails() {
         onClose={() => setIsAddSubjectsModalOpen(false)}
         groupId={Number(groupId)}
         currentSubjects={subjects}
+      />
+
+      {/* Update Group Modal */}
+      <UpdateGroupModal
+        isOpen={isUpdateGroupModalOpen}
+        onClose={() => setIsUpdateGroupModalOpen(false)}
+        group={group}
+      />
+
+      {/* Confirm Delete Group Modal */}
+      <ConfirmDeleteGroupModal
+        isOpen={isDeleteGroupModalOpen}
+        onClose={() => setIsDeleteGroupModalOpen(false)}
+        onConfirm={confirmDeleteGroup}
+        group={group}
+        isDeleting={deleteGroupMutation.isPending}
       />
     </div>
   );
