@@ -55,7 +55,7 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
       };
       
       const response = await createGroupMutation.mutateAsync(createGroupDTO);
-      console.log('response', response);
+      console.log('response', response);  
       toast.success('Grupo criado com sucesso!');
       
       handleClose();

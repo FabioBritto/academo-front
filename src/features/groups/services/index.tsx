@@ -14,9 +14,11 @@ export const useGroupMutations = () => {
             },
             onSuccess: () => {
                 // Invalida todas as queries de grupos para refazer o fetch
+                toast.success('Grupo criado com sucesso!');
                 queryClient.invalidateQueries({ queryKey: ["groups"] });
             },
             onError: (error) => {
+                toast.error(`Não foi possível criar o grupo: ${error.message}`);
                 return `Não foi possível criar o grupo: ${error.message}`;
             }
         });
@@ -49,6 +51,7 @@ export const useGroupMutations = () => {
                 queryClient.invalidateQueries({ queryKey: ["groups"] });
                 queryClient.invalidateQueries({ queryKey: ["subjects", variables.groupId] });
                 queryClient.invalidateQueries({ queryKey: ["subjects"] });
+                toast.success('Matérias associadas ao grupo com sucesso!');
             },
             onError: (error) => {
                 return `Não foi possível associar as matérias: ${error.message}`;
@@ -84,6 +87,7 @@ export const useGroupMutations = () => {
                 // Invalida as queries de grupos e remove o grupo específico do cache
                 queryClient.invalidateQueries({ queryKey: ["groups"] });
                 queryClient.removeQueries({ queryKey: ["group", groupId] });
+                toast.success('Grupo excluído com sucesso!');
             },
             onError: (error) => {
                 return `Não foi possível excluir o grupo: ${error.message}`;

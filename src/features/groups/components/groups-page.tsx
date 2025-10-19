@@ -64,7 +64,6 @@ export function Grupos() {
   };
 
   const handleViewGroup = (groupId: number) => {
-    console.log('groupId', groupId);
     navigate({ to: '/app/grupos/$groupId', params: { groupId: String(groupId) } });
   };
 

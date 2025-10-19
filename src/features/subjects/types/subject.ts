@@ -78,13 +78,12 @@ export const subjectsApi = {
             description: payload.description || "",
             isActive: payload.isActive,
         };
-        console.log('updatePayload', updatePayload);
         const response = await api.put<Subject>(`/subjects`, updatePayload);
         return response.data;
     },
 
     // DELETE /subjects/{subjectId} - Deleta uma matéria (assumindo que existe)
     deleteSubject: async (subjectId: number) => {
-        await api.delete(`/subjects/${subjectId}`);
+        await api.delete(`/subjects?subjectId=${subjectId}`);
     }
 }

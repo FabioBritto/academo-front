@@ -68,8 +68,6 @@ export function LoginModal({ isOpen, onClose, onCreateAccount }: LoginModalProps
         password: formData.password,
         token: '' // Campo obrigatório na interface, mas não usado no login
       });
-
-      console.log('userData', userData);
       
 
       const token = userData.token;

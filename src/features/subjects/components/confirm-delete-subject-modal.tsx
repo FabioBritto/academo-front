@@ -82,9 +82,6 @@ export function ConfirmDeleteSubjectModal({
                     </div>
                   )}
                   <div className="flex items-center mt-1 space-x-4">
-                    <div className="text-xs text-gray-500">
-                      ID: {subject.id}
-                    </div>
                     {subject.group && (
                       <div className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-academo-brown text-white">
                         <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -114,6 +111,7 @@ export function ConfirmDeleteSubjectModal({
                     <div className="mt-1 text-sm text-yellow-700">
                       <p>Ao excluir esta matéria:</p>
                       <ul className="list-disc list-inside mt-2 space-y-1">
+                        <li>Os grupos que contiverem esta matéria serão afetados</li>
                         <li>Todas as atividades relacionadas serão perdidas</li>
                         <li>O histórico acadêmico será removido</li>
                         <li>Não será possível recuperar os dados</li>

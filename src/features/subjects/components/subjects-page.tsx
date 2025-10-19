@@ -1,21 +1,19 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSubjectQueries } from '../services';
 import { useSubjectMutations } from '../services';
 import { CreateSubjectModal } from './create-subject-modal';
 import { UpdateSubjectModal } from './update-subject-modal';
-import { AssociateGroupModal } from '../../groups/components/associate-group-modal';
 import { ConfirmDeleteSubjectModal } from './confirm-delete-subject-modal';
 import { toast } from 'sonner';
 import { PlusIcon } from 'lucide-react';
 import type { Subject } from '../types/subject';
+import { formatDateTime } from '../../../shared/utils/formatter';
 
 export function Materias() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
-  const [isAssociateGroupModalOpen, setIsAssociateGroupModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [subjectToEdit, setSubjectToEdit] = useState<Subject | null>(null);
-  const [subjectToAssociate, setSubjectToAssociate] = useState<Subject | null>(null);
   const [subjectToDelete, setSubjectToDelete] = useState<Subject | null>(null);
 
   const { useGetSubjects } = useSubjectQueries();
@@ -28,6 +26,7 @@ export function Materias() {
     setSubjectToDelete(subject);
     setIsDeleteModalOpen(true);
   };
+
 
   const confirmDeleteSubject = async () => {
     if (!subjectToDelete) return;
@@ -53,10 +52,6 @@ export function Materias() {
     setSubjectToEdit(null);
   };
 
-  const handleAssociateGroups = (subject: Subject) => {
-    setSubjectToAssociate(subject);
-    setIsAssociateGroupModalOpen(true);
-  };
 
   return (
     <div className="space-y-6">
@@ -133,8 +128,11 @@ export function Materias() {
                   <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
                     Descrição
                   </th>
-                  <th className="px-6 py-4 text-center text-xs font-semibold text-white uppercase tracking-wider">
-                    Grupos Associados
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                    Criado em
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                    Atualizado em
                   </th>
                   <th className="px-6 py-4 text-center text-xs font-semibold text-white uppercase tracking-wider">
                     Status
@@ -164,9 +162,6 @@ export function Materias() {
                           <div className="text-sm font-semibold text-gray-900 group-hover:text-academo-brown transition-colors">
                             {subject.name}
                           </div>
-                          <div className="text-xs text-gray-500">
-                            ID: {subject.id}
-                          </div>
                         </div>
                       </div>
                     </td>
@@ -184,28 +179,24 @@ export function Materias() {
                       </div>
                     </td>
 
-                    {/* Grupos Associados */}
-                    <td className="px-6 py-4 text-center">
-                      <div className="flex justify-center">
-                        {subject.group ? (
-                          <div className="inline-flex items-center">
-                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-academo-brown to-academo-sage text-white shadow-sm">
-                              <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                              </svg>
-                              {subject.group.name}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500 border border-gray-200">
-                            <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                            </svg>
-                            Nenhum grupo
-                          </span>
-                        )}
+                    {/* Criado em */}
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-700 max-w-xs">
+                        {formatDateTime(subject.createdAt).date}
+                        <br />
+                        {formatDateTime(subject.createdAt).time}
                       </div>
                     </td>
+
+                    {/* Atualizado em */}
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-700 max-w-xs">
+                        {formatDateTime(subject.updatedAt).date}
+                        <br />
+                        {formatDateTime(subject.updatedAt).time}
+                      </div>
+                    </td>
+
 
                     {/* Status */}
                     <td className="px-6 py-4 text-center">
@@ -224,15 +215,6 @@ export function Materias() {
                     {/* Ações */}
                     <td className="px-6 py-4">
                       <div className="flex justify-center space-x-2">
-                        <button
-                          onClick={() => handleAssociateGroups(subject)}
-                          className="p-2 text-academo-brown hover:text-white hover:bg-academo-brown rounded-lg transition-all duration-200 group/btn"
-                          title="Associar a grupos"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                          </svg>
-                        </button>
                         
                         <button
                           onClick={() => handleEditSubject(subject)}
@@ -295,16 +277,6 @@ export function Materias() {
         isOpen={isUpdateModalOpen}
         onClose={handleCloseUpdateModal}
         subject={subjectToEdit}
-      />
-
-      {/* Associate Group Modal */}
-      <AssociateGroupModal 
-        isOpen={isAssociateGroupModalOpen}
-        onClose={() => {
-          setIsAssociateGroupModalOpen(false);
-          setSubjectToAssociate(null);
-        }}
-        subject={subjectToAssociate}
       />
 
       {/* Confirm Delete Subject Modal */}
