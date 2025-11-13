@@ -8,8 +8,8 @@
 ## Rotas Autenticadas (Área Logada)
 
 Todas as rotas da área autenticada usam o prefixo `/app/` e são renderizadas com:
-- **Header** (`src/components/ui/layout/header.tsx`)
-- **Sidebar** (`src/components/ui/layout/app-side-bar.tsx`)
+- **Header** (`src/shared/components/layout/header.tsx`)
+- **Sidebar** (`src/shared/components/layout/app-side-bar.tsx`)
 
 ### Rotas Disponíveis:
 
@@ -24,29 +24,29 @@ Todas as rotas da área autenticada usam o prefixo `/app/` e são renderizadas c
 
 ## Componentes de Layout
 
-### RootLayout (`src/components/ui/layout/root-layout.tsx`)
+### RootLayout (`src/shared/components/layout/root-layout.tsx`)
 - Componente raiz que decide qual layout usar
 - Se a rota começa com `/app/`, renderiza apenas o `<Outlet />`
 - Caso contrário, usa o `HeaderLanding`
 
-### AuthLayout (`src/components/ui/layout/auth-layout.tsx`)
+### AuthLayout (`src/shared/components/layout/auth-layout.tsx`)
 - Layout para páginas autenticadas
 - Combina Header + Sidebar + conteúdo da página
 
-### Header (`src/components/ui/layout/header.tsx`)
+### Header (`src/shared/components/layout/header.tsx`)
 - Header superior da aplicação
 - Inclui título, breadcrumb e menu do usuário
 - Automaticamente inclui o `AppSidebar`
 
-### AppSidebar (`src/components/ui/layout/app-side-bar.tsx`)
+### AppSidebar (`src/shared/components/layout/app-side-bar.tsx`)
 - Menu lateral da aplicação
 - Destaca a rota ativa
 - Navegação entre as páginas da área logada
 
 ## Como Adicionar Novas Páginas Autenticadas
 
-1. Criar o componente da página em `src/components/pages/`
-2. Adicionar a rota em `src/routes.tsx`:
+1. Criar o componente da página em `src/features/{feature-name}/components/`
+2. Adicionar a rota em `src/app/router.tsx`:
    ```tsx
    const novaRota = createRoute({
      getParentRoute: () => authRoute,
@@ -64,14 +64,42 @@ Todas as rotas da área autenticada usam o prefixo `/app/` e são renderizadas c
      novaRota // <- nova rota
    ])
    ```
-4. Adicionar item no menu da sidebar em `src/components/ui/layout/app-side-bar.tsx`
+4. Adicionar item no menu da sidebar em `src/shared/components/layout/app-side-bar.tsx`
 
 ## Login e Redirecionamento
 
 - Login bem-sucedido redireciona para `/app/home`
 - Logout redireciona para `/` (landing page)
-- Link temporário "Área Logada (Dev)" na landing page para desenvolvimento
+
+## Estrutura de Pastas
+
+```
+src/
+├── app/                        # Configuração da aplicação
+│   ├── main.tsx               # Ponto de entrada
+│   └── router.tsx             # Configuração de rotas
+├── features/                   # Funcionalidades por domínio
+│   ├── auth/
+│   │   ├── components/        # Componentes específicos de auth
+│   │   ├── hooks/             # Hooks (ex: useAuthStore)
+│   │   ├── services/          # Lógica de negócio e API
+│   │   └── types/             # Tipos TypeScript
+│   ├── groups/
+│   ├── subjects/
+│   ├── activities/
+│   └── home/
+├── shared/                     # Recursos compartilhados
+│   ├── components/
+│   │   ├── layout/            # Layouts (Header, Sidebar, etc)
+│   │   └── ui/                # Componentes UI reutilizáveis
+│   ├── config/                # Configurações
+│   ├── services/              # Serviços compartilhados (API, storage)
+│   └── types/                 # Tipos compartilhados
+└── pages/                      # Páginas públicas
+    ├── landing/
+    └── about/
+```
 
 ## Desenvolvimento
 
-Use o botão verde "Área Logada (Dev)" na landing page para acessar rapidamente a área autenticada durante o desenvolvimento. Este botão deve ser removido em produção. 
+Use o botão verde "Área Logada (Dev)" na landing page para acessar rapidamente a área autenticada durante o desenvolvimento. Este botão deve ser removido em produção.
