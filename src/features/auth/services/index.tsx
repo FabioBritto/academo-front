@@ -3,6 +3,8 @@ import type { CreateUserDTO, LoginDTO } from "../types/user";
 import { usersApi } from "../types/user";
 import api from "../../../shared/services/api";
 import { useAuthStore } from "../hooks/use-auth-store";
+import { toast } from "sonner";
+import { useNavigate } from "@tanstack/react-router";
 
 // Função para verificar se o token atual é válido
 export const validateToken = async (): Promise<boolean> => {
@@ -105,8 +107,30 @@ export const useUserMutations = () => {
         })
     }
 
+    const useActivateUserMutation = () => {
+      const navigate = useNavigate();
+      return useMutation({
+        mutationFn: async (value: string) => {
+          // Perform activation with a per-request timeout of 10 seconds
+          // Using the shared `api` instance so interceptors and baseURL are respected
+          return await usersApi.activate(value);
+        },
+        onSuccess: () => {
+          setTimeout(() => {
+            navigate({ to: "/app/home" });
+          }, 5000);
+        },
+        onError: (error) => {
+          setTimeout(() => {
+            navigate({ to: "/app/home" });
+          }, 5000);
+        }
+      })
+    }
+
     return {
         useCreateUserMutation,
-        useLoginMutation
+        useLoginMutation,
+        useActivateUserMutation
     }
 }

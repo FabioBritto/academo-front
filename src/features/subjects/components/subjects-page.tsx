@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { PlusIcon } from 'lucide-react';
 import type { Subject } from '../types/subject';
 import { formatDateTime } from '../../../shared/utils/formatter';
+import { useNavigate } from '@tanstack/react-router';
 
 export function Materias() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -15,7 +16,7 @@ export function Materias() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [subjectToEdit, setSubjectToEdit] = useState<Subject | null>(null);
   const [subjectToDelete, setSubjectToDelete] = useState<Subject | null>(null);
-
+  const navigate = useNavigate();
   const { useGetSubjects } = useSubjectQueries();
   const { useDeleteSubjectMutation } = useSubjectMutations();
   
@@ -52,6 +53,9 @@ export function Materias() {
     setSubjectToEdit(null);
   };
 
+  const handleViewSubject = (subjectId: number) => {
+    navigate({ to: '/app/materias/$subjectId', params: { subjectId: String(subjectId) } });
+  };
 
   return (
     <div className="space-y-6">

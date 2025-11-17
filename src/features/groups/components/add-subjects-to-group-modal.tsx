@@ -71,8 +71,6 @@ export function AddSubjectsToGroupModal({ isOpen, onClose, groupId, currentSubje
 
     setIsLoading(true);
 
-    console.log('selectedSubjects', selectedSubjects);
-    
     try {
         await associateSubjectsMutation.mutateAsync({
           groupId: groupId,

@@ -7,6 +7,7 @@ const Landing: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  
   const slides = [
     {
       title: "Nunca mais perca um prazo",
