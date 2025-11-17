@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useUserMutations } from '../../features/auth/services';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { useAuthStore } from '../../features/auth/hooks/use-auth-store';
 
@@ -12,7 +12,6 @@ interface LoginModalProps {
 
 export function LoginModal({ isOpen, onClose, onCreateAccount }: LoginModalProps) {
   const navigate = useNavigate();
-  const search = useSearch({ from: '/' });
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -87,7 +86,8 @@ export function LoginModal({ isOpen, onClose, onCreateAccount }: LoginModalProps
       toast.success('Login realizado com sucesso!');
       
       // Redireciona para a URL original ou para /app/home
-      const redirectTo = (search as any)?.redirect || '/app/home';
+      const urlParams = new URLSearchParams(window.location.search);
+      const redirectTo = urlParams.get('redirect') || '/app/home';
       navigate({ to: redirectTo });
       
     } catch (error) {

@@ -52,9 +52,7 @@ export const groupsApi = {
     },
 
     associateSubjects: async (associateSubjectsDTO: AssociateSubjectsDTO) => {
-        console.log('associateSubjectsDTO', associateSubjectsDTO);
         const response = await api.put<Group>(`/groups/associate-subjects`, associateSubjectsDTO);
-        console.log('response', response);
         return response.data;
     },
 
