@@ -38,5 +38,9 @@ export const usersApi = {
     login: async (payload: LoginDTO) => {
         const response = await api.post<User>("/auth/login", payload);
         return response.data;
+    },
+    activate: async (value: string) => {
+        const response = await api.post<User>(`/auth/activate?value=${value}`);
+        return response.data;
     }
 }

@@ -10,6 +10,7 @@ import { RootLayout } from '../shared/components/layout/root-layout';
 import { AuthLayout } from '../shared/components/layout/auth-layout';
 import { useAuthStore } from '../features/auth/hooks/use-auth-store';
 import { validateToken } from '../features/auth/services';
+import ActivateUser from '../pages/landing/ActivateUserPage';
 
 const rootRoute = createRootRoute({
   component: RootLayout,
@@ -65,12 +66,19 @@ const landingRoute = createRoute({
   component: Landing,
 });
 
+const activateUserRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/auth/activate',
+  component: ActivateUser
+});
+
 // Rotas da área autenticada
 const homeRoute = createRoute({
   getParentRoute: () => authRoute,
   path: '/home',
   component: Home,
 });
+
 
 const gruposRoute = createRoute({
   getParentRoute: () => authRoute,
@@ -105,6 +113,7 @@ const aboutRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   landingRoute, 
   aboutRoute,
+  activateUserRoute,
   authRoute.addChildren([
     homeRoute,
     gruposRoute,
