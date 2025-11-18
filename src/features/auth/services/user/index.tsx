@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import type { CreateUserDTO, LoginDTO } from "../types/user";
-import { usersApi } from "../types/user";
-import api from "../../../shared/services/api";
-import { useAuthStore } from "../hooks/use-auth-store";
+import type { CreateUserDTO, LoginDTO } from "../../types/user";
+import { usersApi } from "../../types/user";
+import api from "../../../../shared/services/api";
+import { useAuthStore } from "../../hooks/use-auth-store";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
 

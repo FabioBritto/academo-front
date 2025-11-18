@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useUserMutations } from '../../features/auth/services';
+import { useUserMutations } from '../../features/auth/services/user';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { useAuthStore } from '../../features/auth/hooks/use-auth-store';

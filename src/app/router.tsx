@@ -9,7 +9,7 @@ import { Atividades } from '../features/activities/components/activities-page';
 import { RootLayout } from '../shared/components/layout/root-layout';
 import { AuthLayout } from '../shared/components/layout/auth-layout';
 import { useAuthStore } from '../features/auth/hooks/use-auth-store';
-import { validateToken } from '../features/auth/services';
+import { validateToken } from '../features/auth/services/user';
 import ActivateUser from '../pages/landing/ActivateUserPage';
 
 const rootRoute = createRootRoute({
