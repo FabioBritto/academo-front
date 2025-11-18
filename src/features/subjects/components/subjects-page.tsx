@@ -184,8 +184,8 @@ export function Materias() {
                     </td>
 
                     {/* Criado em */}
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-700 max-w-xs">
+                    <td className="px-6 py-4 text-center">
+                      <div className="text-sm text-gray-700 max-w-xs mx-auto">
                         {formatDateTime(subject.createdAt).date}
                         <br />
                         {formatDateTime(subject.createdAt).time}
@@ -193,8 +193,8 @@ export function Materias() {
                     </td>
 
                     {/* Atualizado em */}
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-700 max-w-xs">
+                    <td className="px-6 py-4 text-center">
+                      <div className="text-sm text-gray-700 max-w-xs mx-auto">
                         {formatDateTime(subject.updatedAt).date}
                         <br />
                         {formatDateTime(subject.updatedAt).time}
