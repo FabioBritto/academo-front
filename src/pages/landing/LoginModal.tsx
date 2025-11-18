@@ -67,14 +67,13 @@ export function LoginModal({ isOpen, onClose, onCreateAccount }: LoginModalProps
         password: formData.password,
         token: '' // Campo obrigatório na interface, mas não usado no login
       });
-      
 
       const token = userData.token;
       
       // Salva o estado de autenticação no store
       login(token, {
-        id: userData.id,
-        name: userData.name,
+        id: userData.userId,
+        username: userData.username,
         email: userData.email,
       });
       

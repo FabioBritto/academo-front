@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { AppSidebar } from "./app-side-bar";
+import { useAuthStore } from "../../../features/auth/hooks/use-auth-store";
 
 interface HeaderProps {
     children: React.ReactNode;
@@ -7,6 +8,7 @@ interface HeaderProps {
 
 export function Header({ children }: HeaderProps) {
     const [scrolled, setScrolled] = useState(false);
+    const { user } = useAuthStore();
 
     const handleScroll = useCallback(() => {
         setScrolled(window.scrollY > 10);
@@ -41,9 +43,13 @@ export function Header({ children }: HeaderProps) {
                         <div className="flex items-center space-x-4">
                             <div className="flex items-center space-x-2">
                                 <div className="w-8 h-8 bg-academo-brown rounded-full flex items-center justify-center">
-                                    <span className="text-white text-sm font-medium">U</span>
+                                    <span className="text-white text-sm font-medium">
+                                        {user?.username?.[0]?.toUpperCase() || "M"}
+                                    </span>
                                 </div>
-                                <span className="text-sm font-medium text-academo-brown">Usuário</span>
+                                <span className="text-sm font-medium text-academo-brown">
+                                    {user?.username || "Meu Perfil"}
+                                </span>
                             </div>
                         </div>
                     </div>

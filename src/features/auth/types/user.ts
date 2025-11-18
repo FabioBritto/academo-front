@@ -2,13 +2,19 @@ import api from "../../../shared/services/api";
 
 export interface User {
     id: number;
-    name: string;
+    username: string;
     email: string;
     password: string;
     createdAt: Date;
     updatedAt: Date;
     isActive: boolean;
     token: string;
+}
+
+export interface LoginResponse {
+    token: string;
+    userId: number;
+    username: string;
 }
 
 export interface CreateUserDTO {
@@ -36,7 +42,7 @@ export const usersApi = {
         return response.data;
     },
     login: async (payload: LoginDTO) => {
-        const response = await api.post<User>("/auth/login", payload);
+        const response = await api.post<LoginResponse>("/auth/login", payload);
         return response.data;
     },
     activate: async (value: string) => {
