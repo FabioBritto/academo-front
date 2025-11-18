@@ -5,6 +5,7 @@ import { About } from '../pages/about/about';
 import { Grupos } from '../features/groups/components/groups-page';
 import { GroupDetails } from '../features/groups/components/group-details-page';
 import { Materias } from '../features/subjects/components/subjects-page';
+import SubjectsDetailsPage from '../features/subjects/components/subjects-details-page';
 import { Atividades } from '../features/activities/components/activities-page';
 import { RootLayout } from '../shared/components/layout/root-layout';
 import { AuthLayout } from '../shared/components/layout/auth-layout';
@@ -98,6 +99,12 @@ const materiasRoute = createRoute({
   component: Materias,
 });
 
+const materiasDetailsRoute = createRoute({
+  getParentRoute: () => authRoute,
+  path: '/materias/$subjectId',
+  component: SubjectsDetailsPage,
+});
+
 const atividadesRoute = createRoute({
   getParentRoute: () => authRoute,
   path: '/atividades',
@@ -119,6 +126,7 @@ const routeTree = rootRoute.addChildren([
     gruposRoute,
     groupDetailsRoute,
     materiasRoute,
+    materiasDetailsRoute,
     atividadesRoute
   ])
 ]);

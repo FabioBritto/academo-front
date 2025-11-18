@@ -41,9 +41,9 @@ export const subjectsApi = {
         return response.data;
     },
 
-    // GET /subjects/{subjectId} - Busca uma matéria específica
+    // GET /subjects/one?subjectId={subjectId} - Busca uma matéria específica
     getSubjectById: async (subjectId: number) => {
-        const response = await api.get<Subject>(`/subjects/${subjectId}`);
+        const response = await api.get<Subject>(`/subjects/one?subjectId=${subjectId}`);
         return response.data;
     },
 
