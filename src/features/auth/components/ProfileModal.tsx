@@ -236,10 +236,41 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
               {/* Armazenamento Usado (sempre somente leitura) */}
               {profile.usageStorage !== undefined && (
                 <div>
-                  <label className="text-sm font-medium text-gray-600">Armazenamento Usado</label>
-                  <p className="text-lg text-academo-brown font-medium mt-1">
-                    {profile.usageStorage} MB
-                  </p>
+                  {(() => {
+                    const MAX_STORAGE_BYTES = 314572800; // 300 MB em bytes
+                    const usageBytes = profile.usageStorage;
+                    const usageMB = (usageBytes / (1024 * 1024)).toFixed(2);
+                    const maxMB = (MAX_STORAGE_BYTES / (1024 * 1024)).toFixed(0);
+                    const percentage = (usageBytes / MAX_STORAGE_BYTES) * 100;
+                    
+                    return (
+                      <>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-sm font-medium text-gray-600">Armazenamento Usado</label>
+                          <span className="text-sm font-medium text-gray-700">
+                            {usageMB} MB / {maxMB} MB
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-300 ${
+                              percentage >= 90
+                                ? 'bg-red-500'
+                                : percentage >= 70
+                                ? 'bg-yellow-500'
+                                : 'bg-academo-brown'
+                            }`}
+                            style={{
+                              width: `${Math.min(percentage, 100)}%`
+                            }}
+                          />
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {percentage.toFixed(1)}% utilizado
+                        </p>
+                      </>
+                    );
+                  })()}
                 </div>
               )}
             </div>
