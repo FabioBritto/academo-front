@@ -58,6 +58,14 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
+  // Função para obter a data mínima (dia seguinte)
+  const getMinDate = (): string => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    return formatDateTimeLocal(tomorrow);
+  };
+
   // Carregar dados da atividade quando estiver em modo de edição
   useEffect(() => {
     if (isOpen && activityToEdit) {
@@ -97,6 +105,16 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
     // Validação de data
     if (!formData.activityDate.trim()) {
       newErrors.activityDate = 'Data é obrigatória';
+    } else if (!isEditMode) {
+      // No modo de criação, a data deve ser pelo menos o dia seguinte
+      const activityDate = new Date(formData.activityDate);
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+      
+      if (activityDate < tomorrow) {
+        newErrors.activityDate = 'A data da atividade deve ser a partir do dia seguinte';
+      }
     }
 
     // Validação de data de notificação
@@ -172,6 +190,19 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+    
+    // Validação especial para activityDate - deve ser pelo menos o dia seguinte (apenas no modo de criação)
+    if (name === 'activityDate' && value && !isEditMode) {
+      const activityDate = new Date(value);
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+      
+      if (activityDate < tomorrow) {
+        setErrors(prev => ({ ...prev, activityDate: 'A data da atividade deve ser a partir do dia seguinte' }));
+        return;
+      }
+    }
     
     // Validação especial para notificationDate
     if (name === 'notificationDate' && value && formData.activityDate) {
@@ -268,6 +299,8 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
                   name="activityDate"
                   value={formData.activityDate}
                   onChange={handleInputChange}
+                  min={!isEditMode ? getMinDate() : undefined}
+                  title={!isEditMode ? 'A data da atividade deve ser a partir do dia seguinte' : undefined}
                   className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-academo-brown ${
                     errors.activityDate ? 'border-red-500' : 'border-gray-300'
                   }`}
