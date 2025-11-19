@@ -33,6 +33,7 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
   const [isLoading, setIsLoading] = useState(false);
   const [isSelectTypeModalOpen, setIsSelectTypeModalOpen] = useState(false);
   const [isDescriptionEditorOpen, setIsDescriptionEditorOpen] = useState(false);
+  const [isConfirmRemoveDescriptionOpen, setIsConfirmRemoveDescriptionOpen] = useState(false);
   
   const { useCreateActivityMutation, useUpdateActivityMutation } = useActivityMutations();
   const { useGetTypeActivities } = useTypeActivityQueries();
@@ -495,7 +496,7 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Descrição
                 </label>
-                <div className="space-y-2">
+                <div>
                   <button
                     type="button"
                     onClick={() => setIsDescriptionEditorOpen(true)}
@@ -512,22 +513,26 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
                         {formData.description ? 'Descrição adicionada' : 'Adicionar Descrição'}
                       </span>
                     </div>
-                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
+                    <div className="flex items-center gap-2">
+                      {formData.description && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsConfirmRemoveDescriptionOpen(true);
+                          }}
+                          disabled={isLoading}
+                          className="p-1 text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Remover descrição"
+                        >
+                          <MinusIcon className="w-5 h-5" />
+                        </button>
+                      )}
+                      <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
                   </button>
-                  {formData.description && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setFormData(prev => ({ ...prev, description: '' }));
-                      }}
-                      disabled={isLoading}
-                      className="w-full px-4 py-2 text-sm text-red-600 hover:text-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Remover descrição
-                    </button>
-                  )}
                 </div>
               </div>
             </div>
@@ -595,6 +600,73 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
         }}
         initialValue={formData.description}
       />
+
+      {/* Confirm Remove Description Modal */}
+      {isConfirmRemoveDescriptionOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          {/* Overlay */}
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+            onClick={() => setIsConfirmRemoveDescriptionOpen(false)}
+          />
+          
+          {/* Modal */}
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div className="relative w-full max-w-md transform overflow-hidden rounded-xl bg-white text-left shadow-2xl transition-all">
+              {/* Header with warning color */}
+              <div className="bg-gradient-to-r from-red-500 to-red-600 px-6 py-4">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.35 16.5c-.77.833-.23 2.5 1.732 2.5z" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-lg font-semibold text-white">
+                      Remover Descrição
+                    </h3>
+                    <p className="text-red-100 text-sm">
+                      Esta ação não pode ser desfeita
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="px-6 py-6">
+                <div className="mb-6">
+                  <p className="text-gray-700">
+                    Tem certeza que deseja remover a descrição desta atividade? Esta ação não pode ser desfeita e você perderá todo o conteúdo da descrição.
+                  </p>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsConfirmRemoveDescriptionOpen(false)}
+                    disabled={isLoading}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, description: '' }));
+                      setIsConfirmRemoveDescriptionOpen(false);
+                    }}
+                    disabled={isLoading}
+                    className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Remover
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
