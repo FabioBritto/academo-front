@@ -20,6 +20,7 @@ export interface Activity {
     name: string;
     value?: number;
     ActivityType?: string | null;
+    activityTypeId?: number;
     typeActivity?: TypeActivity;
     description: string;
     subjectName: string | null;
@@ -46,6 +47,7 @@ export interface UpdateActivityDTO {
     activityDate?: Date;
     description?: string;
     ActivityTypeId?: number;
+    value?: number;
     subjectId?: number;
 }
 

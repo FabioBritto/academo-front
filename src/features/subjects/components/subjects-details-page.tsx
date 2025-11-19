@@ -17,6 +17,7 @@ export default function SubjectsDetailsPage() {
     const [selectedActivityId, setSelectedActivityId] = useState<number | null>(null);
     const [isDeleteActivityModalOpen, setIsDeleteActivityModalOpen] = useState(false);
     const [activityToDelete, setActivityToDelete] = useState<Activity | null>(null);
+    const [activityToEdit, setActivityToEdit] = useState<Activity | null>(null);
 
     const { useGetSubjectById } = useSubjectQueries();
     const { useGetActivitiesBySubject } = useActivityQueries();
@@ -50,9 +51,14 @@ export default function SubjectsDetailsPage() {
         }
     };
 
-    const handleEditActivity = (_activity: Activity) => {
-        // TODO: Implementar modal de edição
-        toast.info('Funcionalidade de edição em desenvolvimento');
+    const handleEditActivity = (activity: Activity) => {
+        setActivityToEdit(activity);
+        setIsCreateActivityModalOpen(true);
+    };
+
+    const handleCloseActivityModal = () => {
+        setIsCreateActivityModalOpen(false);
+        setActivityToEdit(null);
     };
 
     // Função para extrair apenas a primeira linha da descrição sem tags
@@ -517,11 +523,12 @@ export default function SubjectsDetailsPage() {
             )}
           </div>
 
-          {/* Create Activity Modal */}
+          {/* Create/Edit Activity Modal */}
           <CreateActivityModal 
             isOpen={isCreateActivityModalOpen}
-            onClose={() => setIsCreateActivityModalOpen(false)}
+            onClose={handleCloseActivityModal}
             subjectId={Number(subjectId)}
+            activityToEdit={activityToEdit}
           />
 
           {/* Confirm Delete Activity Modal */}

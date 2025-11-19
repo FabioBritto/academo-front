@@ -65,6 +65,10 @@ export const useActivityMutations = () => {
                 // Invalida todas as queries de atividades e a atividade específica
                 queryClient.invalidateQueries({ queryKey: ['activities'] });
                 queryClient.invalidateQueries({ queryKey: ['activity', variables.id] });
+                // Invalida também as queries de atividades por subject
+                if (variables.subjectId) {
+                    queryClient.invalidateQueries({ queryKey: ['activities', 'subject', variables.subjectId] });
+                }
             },
             onError: (error) => {
                 return `Não foi possível atualizar a atividade: ${error.message}`;

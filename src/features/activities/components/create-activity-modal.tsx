@@ -1,18 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useActivityMutations } from '../services/activity';
 import { useTypeActivityQueries } from '../services/type-activity';
 import { toast } from 'sonner';
-import { PlusIcon, FileText } from 'lucide-react';
+import { PlusIcon, FileText, Edit } from 'lucide-react';
 import { SelectTypeActivityModal } from './select-type-activity-modal';
 import { DescriptionEditorModal } from './description-editor-modal';
+import type { Activity } from '../types/activity';
 
 interface CreateActivityModalProps {
   isOpen: boolean;
   onClose: () => void;
   subjectId: number;
+  activityToEdit?: Activity | null;
 }
 
-export function CreateActivityModal({ isOpen, onClose, subjectId }: CreateActivityModalProps) {
+export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit }: CreateActivityModalProps) {
   const [formData, setFormData] = useState({
     activityDate: '',
     notificationDate: '',
@@ -31,11 +33,55 @@ export function CreateActivityModal({ isOpen, onClose, subjectId }: CreateActivi
   const [isSelectTypeModalOpen, setIsSelectTypeModalOpen] = useState(false);
   const [isDescriptionEditorOpen, setIsDescriptionEditorOpen] = useState(false);
   
-  const { useCreateActivityMutation } = useActivityMutations();
+  const { useCreateActivityMutation, useUpdateActivityMutation } = useActivityMutations();
   const { useGetTypeActivities } = useTypeActivityQueries();
   
   const createActivityMutation = useCreateActivityMutation();
+  const updateActivityMutation = useUpdateActivityMutation();
   const { data: typeActivities = [] } = useGetTypeActivities();
+  
+  const isEditMode = !!activityToEdit;
+  
+  // Função para formatar data para input datetime-local
+  const formatDateTimeLocal = (date: Date | string | null | undefined): string => {
+    if (!date) return '';
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return '';
+    
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
+  // Carregar dados da atividade quando estiver em modo de edição
+  useEffect(() => {
+    if (isOpen && activityToEdit) {
+      setFormData({
+        activityDate: formatDateTimeLocal(activityToEdit.activityDate),
+        notificationDate: formatDateTimeLocal(activityToEdit.notificationDate),
+        name: activityToEdit.name || '',
+        activityTypeId: activityToEdit.activityTypeId 
+          ? String(activityToEdit.activityTypeId) 
+          : (activityToEdit.typeActivity?.id ? String(activityToEdit.typeActivity.id) : ''),
+        value: activityToEdit.value !== null && activityToEdit.value !== undefined ? String(activityToEdit.value) : '0',
+        description: activityToEdit.description || ''
+      });
+    } else if (isOpen && !activityToEdit) {
+      // Resetar formulário quando abrir para criar
+      setFormData({
+        activityDate: '',
+        notificationDate: '',
+        name: '',
+        activityTypeId: '',
+        value: '0',
+        description: ''
+      });
+    }
+  }, [isOpen, activityToEdit]);
   
   // Buscar o nome do tipo selecionado para exibir no botão
   const selectedType = typeActivities.find(type => type.id === Number(formData.activityTypeId));
@@ -72,23 +118,41 @@ export function CreateActivityModal({ isOpen, onClose, subjectId }: CreateActivi
     setIsLoading(true);
     
     try {
-      const payload = {
-        activityDate: new Date(formData.activityDate),
-        notificationDate: formData.notificationDate ? new Date(formData.notificationDate) : undefined,
-        name: formData.name.trim(),
-        activityTypeId: formData.activityTypeId ? Number(formData.activityTypeId) : undefined,
-        value: formData.value ? Number(formData.value) : 0,
-        subjectId: subjectId,
-        description: formData.description.trim() || undefined,
-      };
-      
-      await createActivityMutation.mutateAsync(payload);
-      toast.success('Atividade criada com sucesso!');
+      if (isEditMode && activityToEdit) {
+        // Modo de edição
+        const payload = {
+          id: activityToEdit.id,
+          activityDate: formData.activityDate ? new Date(formData.activityDate) : undefined,
+          notificationDate: formData.notificationDate ? new Date(formData.notificationDate) : undefined,
+          name: formData.name.trim(),
+          ActivityTypeId: formData.activityTypeId ? Number(formData.activityTypeId) : undefined,
+          value: formData.value ? Number(formData.value) : 0,
+          subjectId: subjectId,
+          description: formData.description.trim() || undefined,
+        };
+        
+        await updateActivityMutation.mutateAsync(payload);
+        toast.success('Atividade atualizada com sucesso!');
+      } else {
+        // Modo de criação
+        const payload = {
+          activityDate: new Date(formData.activityDate),
+          notificationDate: formData.notificationDate ? new Date(formData.notificationDate) : undefined,
+          name: formData.name.trim(),
+          activityTypeId: formData.activityTypeId ? Number(formData.activityTypeId) : undefined,
+          value: formData.value ? Number(formData.value) : 0,
+          subjectId: subjectId,
+          description: formData.description.trim() || undefined,
+        };
+        
+        await createActivityMutation.mutateAsync(payload);
+        toast.success('Atividade criada com sucesso!');
+      }
       
       handleClose();
     } catch (error) {
-      console.error('Erro ao criar atividade:', error);
-      toast.error('Não foi possível criar a atividade. Tente novamente.');
+      console.error(`Erro ao ${isEditMode ? 'atualizar' : 'criar'} atividade:`, error);
+      toast.error(`Não foi possível ${isEditMode ? 'atualizar' : 'criar'} a atividade. Tente novamente.`);
     } finally {
       setIsLoading(false);
     }
@@ -135,7 +199,7 @@ export function CreateActivityModal({ isOpen, onClose, subjectId }: CreateActivi
           <div className="bg-academo-brown px-6 py-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-white">
-                Criar Nova Atividade
+                {isEditMode ? 'Editar Atividade' : 'Criar Nova Atividade'}
               </h3>
               <button
                 onClick={handleClose}
@@ -148,7 +212,9 @@ export function CreateActivityModal({ isOpen, onClose, subjectId }: CreateActivi
               </button>
             </div>
             <p className="text-orange-100 text-sm mt-1">
-              Preencha os dados abaixo para criar uma nova atividade
+              {isEditMode 
+                ? 'Edite os dados da atividade abaixo' 
+                : 'Preencha os dados abaixo para criar uma nova atividade'}
             </p>
           </div>
 
@@ -266,7 +332,7 @@ export function CreateActivityModal({ isOpen, onClose, subjectId }: CreateActivi
               {/* Valor */}
               <div>
                 <label htmlFor="value" className="block text-sm font-medium text-gray-700 mb-1">
-                  Valor: {formData.value}
+                  Nota: {formData.value}
                 </label>
                 <div className="space-y-2">
                   <input
@@ -352,12 +418,21 @@ export function CreateActivityModal({ isOpen, onClose, subjectId }: CreateActivi
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Criando...
+                    {isEditMode ? 'Salvando...' : 'Criando...'}
                   </>
                 ) : (
                   <>
-                    <PlusIcon className="w-4 h-4 mr-2" />
-                    Criar Atividade
+                    {isEditMode ? (
+                      <>
+                        <Edit className="w-4 h-4 mr-2" />
+                        Salvar Alterações
+                      </>
+                    ) : (
+                      <>
+                        <PlusIcon className="w-4 h-4 mr-2" />
+                        Criar Atividade
+                      </>
+                    )}
                   </>
                 )}
               </button>
