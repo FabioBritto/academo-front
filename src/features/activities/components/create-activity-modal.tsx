@@ -26,6 +26,7 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
   
   const [errors, setErrors] = useState({
     activityDate: '',
+    notificationDate: '',
     name: ''
   });
   
@@ -89,12 +90,23 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
   const validateForm = () => {
     const newErrors = {
       activityDate: '',
+      notificationDate: '',
       name: ''
     };
 
     // Validação de data
     if (!formData.activityDate.trim()) {
       newErrors.activityDate = 'Data é obrigatória';
+    }
+
+    // Validação de data de notificação
+    if (formData.notificationDate && formData.activityDate) {
+      const notificationDate = new Date(formData.notificationDate);
+      const activityDate = new Date(formData.activityDate);
+      
+      if (notificationDate < activityDate) {
+        newErrors.notificationDate = 'A data de notificação não pode ser anterior à data da atividade';
+      }
     }
 
     // Validação de nome
@@ -160,6 +172,30 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+    
+    // Validação especial para notificationDate
+    if (name === 'notificationDate' && value && formData.activityDate) {
+      const notificationDate = new Date(value);
+      const activityDate = new Date(formData.activityDate);
+      
+      if (notificationDate < activityDate) {
+        setErrors(prev => ({ ...prev, notificationDate: 'A data de notificação não pode ser anterior à data da atividade' }));
+        return;
+      }
+    }
+    
+    // Validação especial para activityDate - se mudar, verificar notificationDate
+    if (name === 'activityDate' && value && formData.notificationDate) {
+      const notificationDate = new Date(formData.notificationDate);
+      const activityDate = new Date(value);
+      
+      if (notificationDate < activityDate) {
+        setErrors(prev => ({ ...prev, notificationDate: 'A data de notificação não pode ser anterior à data da atividade' }));
+        setFormData(prev => ({ ...prev, [name]: value, notificationDate: '' }));
+        return;
+      }
+    }
+    
     setFormData(prev => ({ ...prev, [name]: value }));
     
     if (errors[name as keyof typeof errors]) {
@@ -178,7 +214,7 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
         value: '0',
         description: '' 
       });
-      setErrors({ activityDate: '', name: '' });
+      setErrors({ activityDate: '', notificationDate: '', name: '' });
     }
   };
 
@@ -244,7 +280,12 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
 
               {/* Data de Notificação */}
               <div>
-                <label htmlFor="notificationDate" className="block text-sm font-medium text-gray-700 mb-1">
+                <label 
+                  htmlFor="notificationDate" 
+                  className={`block text-sm font-medium mb-1 ${
+                    !formData.activityDate ? 'text-gray-400' : 'text-gray-700'
+                  }`}
+                >
                   Data de Notificação
                 </label>
                 <input
@@ -253,9 +294,20 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
                   name="notificationDate"
                   value={formData.notificationDate}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-academo-brown"
-                  disabled={isLoading}
+                  min={formData.activityDate || undefined}
+                  title={!formData.activityDate ? 'Primeiro selecione a data da atividade' : errors.notificationDate || undefined}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-academo-brown ${
+                    errors.notificationDate 
+                      ? 'border-red-500' 
+                      : !formData.activityDate
+                      ? 'border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'border-gray-300'
+                  }`}
+                  disabled={isLoading || !formData.activityDate}
                 />
+                {errors.notificationDate && (
+                  <p className="mt-1 text-sm text-red-500">{errors.notificationDate}</p>
+                )}
               </div>
 
               {/* Nome */}
