@@ -317,7 +317,7 @@ export default function SubjectsDetailsPage() {
                   <table className="w-full">
                     <thead className="bg-gradient-to-r from-academo-brown to-academo-sage">
                       <tr>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                        <th className="px-6 py-4 text-center text-xs font-semibold text-white uppercase tracking-wider">
                           Data
                         </th>
                         <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
@@ -350,7 +350,7 @@ export default function SubjectsDetailsPage() {
                           }`}
                         >
                         {/* Data */}
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 text-center">
                           <div className="text-sm text-gray-900 font-medium">
                             {formatDateTime(activity.activityDate).date}
                           </div>
@@ -463,15 +463,27 @@ export default function SubjectsDetailsPage() {
                       <div className="flex flex-col h-full">
                         {/* Header fixo */}
                         <div className="p-6 border-b border-gray-200 flex-shrink-0">
-                          <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                          <h4 className="text-lg font-semibold text-gray-900 mb-3">
                             {selectedActivity.name}
                           </h4>
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <Calendar className="w-4 h-4" />
-                            <span>{formatDateTime(selectedActivity.activityDate).date}</span>
-                            <span className="mx-1">•</span>
-                            <Clock className="w-4 h-4" />
-                            <span>{formatDateTime(selectedActivity.activityDate).time}</span>
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <Calendar className="w-4 h-4" />
+                              <span className="font-medium">Data da Atividade:</span>
+                              <span>{formatDateTime(selectedActivity.activityDate).date}</span>
+                              <span className="mx-1">•</span>
+                              <Clock className="w-4 h-4" />
+                              <span>{formatDateTime(selectedActivity.activityDate).time}</span>
+                            </div>
+                            {selectedActivity.notificationDate && (
+                              <div className="flex items-center gap-2 text-sm text-gray-600">
+                                <Clock className="w-4 h-4" />
+                                <span className="font-medium">Data de Notificação:</span>
+                                <span>{formatDateTime(selectedActivity.notificationDate).date}</span>
+                                <span className="mx-1">•</span>
+                                <span>{formatDateTime(selectedActivity.notificationDate).time}</span>
+                              </div>
+                            )}
                           </div>
                         </div>
 
