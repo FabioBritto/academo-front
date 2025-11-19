@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useActivityMutations } from '../services/activity';
 import { useTypeActivityQueries } from '../services/type-activity';
 import { toast } from 'sonner';
-import { PlusIcon, FileText, Edit } from 'lucide-react';
+import { PlusIcon, FileText, Edit, MinusIcon } from 'lucide-react';
 import { SelectTypeActivityModal } from './select-type-activity-modal';
 import { DescriptionEditorModal } from './description-editor-modal';
 import type { Activity } from '../types/activity';
@@ -66,6 +66,21 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
     return formatDateTimeLocal(tomorrow);
   };
 
+  // Função para obter a data mínima de notificação (30 minutos a partir de agora)
+  const getMinNotificationDate = (): string => {
+    const minDate = new Date();
+    minDate.setMinutes(minDate.getMinutes() + 30);
+    return formatDateTimeLocal(minDate);
+  };
+
+  // Função para verificar se a data da atividade já passou
+  const isActivityDatePassed = (): boolean => {
+    if (!isEditMode || !activityToEdit) return false;
+    const activityDate = new Date(activityToEdit.activityDate);
+    const now = new Date();
+    return activityDate < now;
+  };
+
   // Carregar dados da atividade quando estiver em modo de edição
   useEffect(() => {
     if (isOpen && activityToEdit) {
@@ -121,9 +136,13 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
     if (formData.notificationDate && formData.activityDate) {
       const notificationDate = new Date(formData.notificationDate);
       const activityDate = new Date(formData.activityDate);
+      const minNotificationDate = new Date();
+      minNotificationDate.setMinutes(minNotificationDate.getMinutes() + 30);
       
-      if (notificationDate < activityDate) {
-        newErrors.notificationDate = 'A data de notificação não pode ser anterior à data da atividade';
+      if (notificationDate < minNotificationDate) {
+        newErrors.notificationDate = 'A data de notificação deve ser pelo menos 30 minutos a partir de agora';
+      } else if (notificationDate >= activityDate) {
+        newErrors.notificationDate = 'A data de notificação deve ser anterior à data da atividade';
       }
     }
 
@@ -208,9 +227,14 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
     if (name === 'notificationDate' && value && formData.activityDate) {
       const notificationDate = new Date(value);
       const activityDate = new Date(formData.activityDate);
+      const minNotificationDate = new Date();
+      minNotificationDate.setMinutes(minNotificationDate.getMinutes() + 30);
       
-      if (notificationDate < activityDate) {
-        setErrors(prev => ({ ...prev, notificationDate: 'A data de notificação não pode ser anterior à data da atividade' }));
+      if (notificationDate < minNotificationDate) {
+        setErrors(prev => ({ ...prev, notificationDate: 'A data de notificação deve ser pelo menos 30 minutos a partir de agora' }));
+        return;
+      } else if (notificationDate >= activityDate) {
+        setErrors(prev => ({ ...prev, notificationDate: 'A data de notificação deve ser anterior à data da atividade' }));
         return;
       }
     }
@@ -219,9 +243,15 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
     if (name === 'activityDate' && value && formData.notificationDate) {
       const notificationDate = new Date(formData.notificationDate);
       const activityDate = new Date(value);
+      const minNotificationDate = new Date();
+      minNotificationDate.setMinutes(minNotificationDate.getMinutes() + 30);
       
-      if (notificationDate < activityDate) {
-        setErrors(prev => ({ ...prev, notificationDate: 'A data de notificação não pode ser anterior à data da atividade' }));
+      if (notificationDate < minNotificationDate) {
+        setErrors(prev => ({ ...prev, notificationDate: 'A data de notificação deve ser pelo menos 30 minutos a partir de agora' }));
+        setFormData(prev => ({ ...prev, [name]: value, notificationDate: '' }));
+        return;
+      } else if (notificationDate >= activityDate) {
+        setErrors(prev => ({ ...prev, notificationDate: 'A data de notificação deve ser anterior à data da atividade' }));
         setFormData(prev => ({ ...prev, [name]: value, notificationDate: '' }));
         return;
       }
@@ -290,7 +320,12 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
             <div className="space-y-4">
               {/* Data */}
               <div>
-                <label htmlFor="activityDate" className="block text-sm font-medium text-gray-700 mb-1">
+                <label 
+                  htmlFor="activityDate" 
+                  className={`block text-sm font-medium mb-1 ${
+                    isActivityDatePassed() ? 'text-gray-400' : 'text-gray-700'
+                  }`}
+                >
                   Data <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -300,11 +335,17 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
                   value={formData.activityDate}
                   onChange={handleInputChange}
                   min={!isEditMode ? getMinDate() : undefined}
-                  title={!isEditMode ? 'A data da atividade deve ser a partir do dia seguinte' : undefined}
+                  title={isActivityDatePassed() 
+                    ? 'Não é possível alterar a data de uma atividade que já aconteceu' 
+                    : (!isEditMode ? 'A data da atividade deve ser a partir do dia seguinte' : undefined)}
                   className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-academo-brown ${
-                    errors.activityDate ? 'border-red-500' : 'border-gray-300'
+                    errors.activityDate 
+                      ? 'border-red-500' 
+                      : isActivityDatePassed()
+                      ? 'border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'border-gray-300'
                   }`}
-                  disabled={isLoading}
+                  disabled={isLoading || isActivityDatePassed()}
                 />
                 {errors.activityDate && (
                   <p className="mt-1 text-sm text-red-500">{errors.activityDate}</p>
@@ -316,7 +357,7 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
                 <label 
                   htmlFor="notificationDate" 
                   className={`block text-sm font-medium mb-1 ${
-                    !formData.activityDate ? 'text-gray-400' : 'text-gray-700'
+                    isActivityDatePassed() ? 'text-gray-400' : 'text-gray-700'
                   }`}
                 >
                   Data de Notificação
@@ -327,16 +368,21 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
                   name="notificationDate"
                   value={formData.notificationDate}
                   onChange={handleInputChange}
-                  min={formData.activityDate || undefined}
-                  title={!formData.activityDate ? 'Primeiro selecione a data da atividade' : errors.notificationDate || undefined}
+                  min={formData.activityDate ? getMinNotificationDate() : undefined}
+                  max={formData.activityDate || undefined}
+                  title={isActivityDatePassed()
+                    ? 'Não é possível alterar a data de notificação de uma atividade que já aconteceu'
+                    : (!formData.activityDate 
+                      ? 'Primeiro selecione a data da atividade' 
+                      : 'A data de notificação deve ser entre 30 minutos a partir de agora e a data da atividade')}
                   className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-academo-brown ${
                     errors.notificationDate 
                       ? 'border-red-500' 
-                      : !formData.activityDate
+                      : !formData.activityDate || isActivityDatePassed()
                       ? 'border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed'
                       : 'border-gray-300'
                   }`}
-                  disabled={isLoading || !formData.activityDate}
+                  disabled={isLoading || !formData.activityDate || isActivityDatePassed()}
                 />
                 {errors.notificationDate && (
                   <p className="mt-1 text-sm text-red-500">{errors.notificationDate}</p>
@@ -370,7 +416,7 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Tipo de Atividade
                 </label>
-                <div className="space-y-2">
+                <div>
                   <button
                     type="button"
                     onClick={() => setIsSelectTypeModalOpen(true)}
@@ -394,23 +440,27 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
                           <span className="text-gray-500">Escolher Tipo de Atividade</span>
                         )}
                       </div>
-                      <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
+                      <div className="flex items-center gap-2">
+                        {formData.activityTypeId && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setFormData(prev => ({ ...prev, activityTypeId: '' }));
+                            }}
+                            disabled={isLoading}
+                            className="p-1 text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Remover tipo selecionado"
+                          >
+                            <MinusIcon className="w-5 h-5" />
+                          </button>
+                        )}
+                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
                     </div>
                   </button>
-                  {formData.activityTypeId && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setFormData(prev => ({ ...prev, activityTypeId: '' }));
-                      }}
-                      disabled={isLoading}
-                      className="w-full px-4 py-2 text-sm text-red-600 hover:text-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Remover tipo selecionado
-                    </button>
-                  )}
                 </div>
               </div>
 

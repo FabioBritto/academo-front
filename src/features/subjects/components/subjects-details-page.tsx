@@ -472,7 +472,6 @@ export default function SubjectsDetailsPage() {
                               <span className="font-medium">Data da Atividade:</span>
                               <span>{formatDateTime(selectedActivity.activityDate).date}</span>
                               <span className="mx-1">•</span>
-                              <Clock className="w-4 h-4" />
                               <span>{formatDateTime(selectedActivity.activityDate).time}</span>
                             </div>
                             {selectedActivity.notificationDate && (
