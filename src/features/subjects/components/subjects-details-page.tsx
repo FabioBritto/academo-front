@@ -11,12 +11,137 @@ export default function SubjectsDetailsPage() {
     const navigate = useNavigate();
 
     const [isCreateActivityModalOpen, setIsCreateActivityModalOpen] = useState(false);
+    const [selectedActivityId, setSelectedActivityId] = useState<number | null>(null);
 
     const { useGetSubjectById } = useSubjectQueries();
     const { useGetActivitiesBySubject } = useActivityQueries();
 
     const { data: subject, isLoading: isLoadingSubject } = useGetSubjectById(Number(subjectId));
     const { data: activities = [], isLoading: isLoadingActivities } = useGetActivitiesBySubject(Number(subjectId));
+
+    const selectedActivity = activities.find(a => a.id === selectedActivityId);
+
+    // Função para extrair apenas a primeira linha da descrição sem tags
+    const getFirstLinePlainText = (description: string): string => {
+        if (!description) return '';
+        
+        // Pegar apenas a primeira linha
+        const firstLine = description.split('\n')[0];
+        
+        // Remover tags HTML
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = firstLine;
+        let text = tempDiv.textContent || tempDiv.innerText || '';
+        
+        // Remover formatação Markdown
+        text = text
+            .replace(/\*\*(.*?)\*\*/g, '$1') // Negrito
+            .replace(/\*(.*?)\*/g, '$1') // Itálico
+            .replace(/<u>(.*?)<\/u>/g, '$1') // Sublinhado
+            .replace(/^#+\s*/, '') // Títulos
+            .replace(/^[-*]\s*/, '') // Lista com tópicos
+            .replace(/^\d+\.\s*/, '') // Lista enumerada
+            .trim();
+        
+        return text;
+    };
+
+    // Função para renderizar markdown como HTML
+    const renderMarkdown = (text: string) => {
+        if (!text.trim()) return { __html: '' };
+
+        const lines = text.split('\n');
+        let html = '';
+        let inList = false;
+        let listType: 'ul' | 'ol' | null = null;
+
+        lines.forEach((line) => {
+            const trimmed = line.trim();
+            
+            // Títulos
+            if (trimmed.startsWith('### ')) {
+                if (inList) {
+                    html += listType === 'ol' ? '</ol>' : '</ul>';
+                    inList = false;
+                    listType = null;
+                }
+                html += `<h3 class="text-lg font-bold mb-2 mt-3">${trimmed.substring(4)}</h3>`;
+            } else if (trimmed.startsWith('## ')) {
+                if (inList) {
+                    html += listType === 'ol' ? '</ol>' : '</ul>';
+                    inList = false;
+                    listType = null;
+                }
+                html += `<h2 class="text-xl font-bold mb-2 mt-3">${trimmed.substring(3)}</h2>`;
+            } else if (trimmed.startsWith('# ')) {
+                if (inList) {
+                    html += listType === 'ol' ? '</ol>' : '</ul>';
+                    inList = false;
+                    listType = null;
+                }
+                html += `<h1 class="text-2xl font-bold mb-2 mt-3">${trimmed.substring(2)}</h1>`;
+            } 
+            // Lista com tópicos
+            else if (trimmed.startsWith('- ')) {
+                if (!inList || listType !== 'ul') {
+                    if (inList && listType === 'ol') {
+                        html += '</ol>';
+                    }
+                    html += '<ul class="list-disc ml-6 mb-2">';
+                    inList = true;
+                    listType = 'ul';
+                }
+                const content = trimmed.substring(2);
+                html += `<li class="mb-1">${formatInlineMarkdown(content)}</li>`;
+            }
+            // Lista enumerada
+            else if (/^\d+\.\s/.test(trimmed)) {
+                if (!inList || listType !== 'ol') {
+                    if (inList && listType === 'ul') {
+                        html += '</ul>';
+                    }
+                    html += '<ol class="list-decimal ml-6 mb-2">';
+                    inList = true;
+                    listType = 'ol';
+                }
+                const content = trimmed.replace(/^\d+\.\s/, '');
+                html += `<li class="mb-1">${formatInlineMarkdown(content)}</li>`;
+            }
+            // Linha vazia
+            else if (!trimmed) {
+                if (inList) {
+                    html += listType === 'ol' ? '</ol>' : '</ul>';
+                    inList = false;
+                    listType = null;
+                }
+                html += '<br>';
+            }
+            // Texto normal
+            else {
+                if (inList) {
+                    html += listType === 'ol' ? '</ol>' : '</ul>';
+                    inList = false;
+                    listType = null;
+                }
+                html += `<p class="mb-2">${formatInlineMarkdown(trimmed)}</p>`;
+            }
+        });
+
+        // Fechar lista se ainda estiver aberta
+        if (inList) {
+            html += listType === 'ol' ? '</ol>' : '</ul>';
+        }
+
+        return { __html: html };
+    };
+
+    // Função para formatar markdown inline (negrito, itálico, sublinhado)
+    const formatInlineMarkdown = (text: string) => {
+        return text
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/<u>(.*?)<\/u>/g, '<u>$1</u>');
+    };
 
 
     const handleGoBack = () => {
@@ -42,32 +167,6 @@ export default function SubjectsDetailsPage() {
           
           {/* Informações da Matéria */}
           <div className="bg-white rounded-lg shadow-sm border p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center space-x-4">
-                <div className="flex-shrink-0 h-16 w-16">
-                  <div className="h-16 w-16 rounded-full bg-academo-sage flex items-center justify-center">
-                    <span className="text-2xl font-bold text-white">
-                      {subject?.name?.charAt(0).toUpperCase() || 'M'}
-                    </span>
-                  </div>
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">{subject?.name || 'Matéria'}</h2>
-                </div>
-              </div>
-              
-              {/* Status Badge */}
-              {subject && (
-                <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                  subject.isActive 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-gray-100 text-gray-800'
-                }`}>
-                  {subject.isActive ? 'Ativo' : 'Inativo'}
-                </div>
-              )}
-            </div>
-
             {isLoadingSubject ? (
               <div className="p-8 text-center">
                 <div className="inline-flex items-center space-x-2">
@@ -80,70 +179,48 @@ export default function SubjectsDetailsPage() {
               </div>
             ) : subject ? (
               <div className="space-y-4">
-                {/* Descrição */}
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2">Descrição</h3>
-                  <p className="text-gray-600">
-                    {subject.description || (
-                      <span className="italic text-gray-400">Sem descrição</span>
-                    )}
-                  </p>
-                </div>
-
-                {/* Informações de Data e Hora */}
-                <div className="pt-4 border-t border-gray-100">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Data de Criação */}
-                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                      <div className="flex items-start space-x-3">
-                        <div className="flex-shrink-0">
-                          <div className="w-10 h-10 rounded-lg bg-academo-brown/10 flex items-center justify-center">
-                            <Calendar className="w-5 h-5 text-academo-brown" />
-                          </div>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
-                            Criado em
-                          </h4>
-                          <div className="space-y-1">
-                            <p className="text-sm font-medium text-gray-900">
-                              {formatDateTime(subject.createdAt).date}
-                            </p>
-                            <div className="flex items-center space-x-1 text-xs text-gray-600">
-                              <Clock className="w-3 h-3" />
-                              <span>{formatDateTime(subject.createdAt).time}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                {/* Header com Nome, Avatar e Status */}
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="h-14 w-14 rounded-full bg-academo-sage flex items-center justify-center flex-shrink-0">
+                      <span className="text-xl font-bold text-white">
+                        {subject?.name?.charAt(0).toUpperCase() || 'M'}
+                      </span>
                     </div>
-
-                    {/* Data de Atualização */}
-                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                      <div className="flex items-start space-x-3">
-                        <div className="flex-shrink-0">
-                          <div className="w-10 h-10 rounded-lg bg-academo-sage/10 flex items-center justify-center">
-                            <Clock className="w-5 h-5 text-academo-sage" />
-                          </div>
+                    <div>
+                      <h2 className="text-xl font-bold text-gray-900 mb-1">{subject?.name || 'Matéria'}</h2>
+                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          <span>Criado em {formatDateTime(subject.createdAt).date}</span>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
-                            Atualizado em
-                          </h4>
-                          <div className="space-y-1">
-                            <p className="text-sm font-medium text-gray-900">
-                              {formatDateTime(subject.updatedAt).date}
-                            </p>
-                            <div className="flex items-center space-x-1 text-xs text-gray-600">
-                              <Clock className="w-3 h-3" />
-                              <span>{formatDateTime(subject.updatedAt).time}</span>
-                            </div>
-                          </div>
+                        <span>•</span>
+                        <div className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          <span>Atualizado {formatDateTime(subject.updatedAt).date}</span>
                         </div>
                       </div>
                     </div>
                   </div>
+                  
+                  {/* Status Badge */}
+                  <div className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${
+                    subject.isActive 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-gray-100 text-gray-800'
+                  }`}>
+                    {subject.isActive ? 'Ativo' : 'Inativo'}
+                  </div>
                 </div>
+
+                {/* Descrição */}
+                {subject.description && (
+                  <div className="pt-3 border-t border-gray-100">
+                    <p className="text-sm text-gray-700 leading-relaxed">
+                      {subject.description}
+                    </p>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="p-8 text-center">
@@ -194,36 +271,41 @@ export default function SubjectsDetailsPage() {
                 </div>
               </div>
             ) : activities.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gradient-to-r from-academo-brown to-academo-sage">
-                    <tr>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
-                        Data
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
-                        Nome
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
-                        Tipo
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
-                        Descrição
-                      </th>
-                      <th className="px-6 py-4 text-center text-xs font-semibold text-white uppercase tracking-wider">
-                        Valor
-                      </th>
-                      <th className="px-6 py-4 text-center text-xs font-semibold text-white uppercase tracking-wider">
-                        Data Notificação
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-100">
-                    {activities.map((activity) => (
-                      <tr 
-                        key={activity.id}
-                        className="hover:bg-gray-50 transition-all duration-200 group"
-                      >
+              <div className="flex gap-4">
+                {/* Tabela - 65% */}
+                <div className="w-[65%] overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gradient-to-r from-academo-brown to-academo-sage">
+                      <tr>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                          Data
+                        </th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                          Nome
+                        </th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                          Tipo
+                        </th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                          Descrição
+                        </th>
+                        <th className="px-6 py-4 text-center text-xs font-semibold text-white uppercase tracking-wider">
+                          Valor
+                        </th>
+                        <th className="px-6 py-4 text-center text-xs font-semibold text-white uppercase tracking-wider">
+                          Data Notificação
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-100">
+                      {activities.map((activity) => (
+                        <tr 
+                          key={activity.id}
+                          onClick={() => setSelectedActivityId(activity.id)}
+                          className={`hover:bg-gray-50 transition-all duration-200 group cursor-pointer ${
+                            selectedActivityId === activity.id ? 'bg-academo-brown/10' : ''
+                          }`}
+                        >
                         {/* Data */}
                         <td className="px-6 py-4">
                           <div className="text-sm text-gray-900 font-medium">
@@ -258,7 +340,11 @@ export default function SubjectsDetailsPage() {
                         <td className="px-6 py-4">
                           <div className="text-sm text-gray-700 max-w-xs">
                             {activity.description ? (
-                              <span className="line-clamp-2">{activity.description}</span>
+                              <span className="line-clamp-1" title={getFirstLinePlainText(activity.description)}>
+                                {getFirstLinePlainText(activity.description) || (
+                                  <span className="text-gray-400 italic text-xs">Sem descrição</span>
+                                )}
+                              </span>
                             ) : (
                               <span className="text-gray-400 italic text-xs">
                                 Sem descrição
@@ -297,10 +383,56 @@ export default function SubjectsDetailsPage() {
                           </div>
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Seção de Detalhes - 35% */}
+                  <div className="w-[35%] border-l border-gray-200">
+                    {selectedActivity ? (
+                      <div className="p-6 h-full">
+                        <div className="mb-4">
+                          <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                            {selectedActivity.name}
+                          </h4>
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <Calendar className="w-4 h-4" />
+                            <span>{formatDateTime(selectedActivity.activityDate).date}</span>
+                            <span className="mx-1">•</span>
+                            <Clock className="w-4 h-4" />
+                            <span>{formatDateTime(selectedActivity.activityDate).time}</span>
+                          </div>
+                        </div>
+
+                        {selectedActivity.description ? (
+                          <div className="prose prose-sm max-w-none">
+                            <h5 className="text-sm font-semibold text-gray-700 mb-2">Descrição</h5>
+                            <div 
+                              className="text-sm text-gray-700"
+                              dangerouslySetInnerHTML={renderMarkdown(selectedActivity.description)}
+                            />
+                          </div>
+                        ) : (
+                          <div className="text-center py-8">
+                            <p className="text-gray-400 italic text-sm">
+                              Esta atividade não possui descrição
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="p-6 h-full flex items-center justify-center">
+                        <div className="text-center">
+                          <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                          <p className="text-gray-500 text-sm">
+                            Clique em uma atividade para ver os detalhes
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
             ) : (
               <div className="p-6">
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">

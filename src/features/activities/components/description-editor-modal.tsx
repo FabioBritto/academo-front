@@ -47,12 +47,19 @@ export function DescriptionEditorModal({
     const newText = beforeText + before + selectedText + after + afterText;
     setMarkdown(newText);
 
-      // Restaurar posição do cursor
-      setTimeout(() => {
-        textarea.focus();
-        const newPosition = start + before.length + selectedText.length + after.length;
-        textarea.setSelectionRange(newPosition, newPosition);
-      }, 0);
+    // Restaurar posição do cursor
+    setTimeout(() => {
+      textarea.focus();
+      let newPosition: number;
+      if (selectedText) {
+        // Se há texto selecionado, posicionar depois do texto formatado
+        newPosition = start + before.length + selectedText.length + after.length;
+      } else {
+        // Se não há texto selecionado, posicionar entre os marcadores
+        newPosition = start + before.length;
+      }
+      textarea.setSelectionRange(newPosition, newPosition);
+    }, 0);
   };
 
   const applyFormat = (format: string) => {
