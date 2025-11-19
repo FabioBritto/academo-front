@@ -1,10 +1,13 @@
 import { useParams, useNavigate } from "@tanstack/react-router";
 import { useSubjectQueries } from "../services";
-import { useActivityQueries } from "../../activities/services/activity/index";
+import { useActivityQueries, useActivityMutations } from "../../activities/services/activity/index";
 import { ArrowLeft, Calendar, Clock, BookOpen, PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { formatDateTime } from "../../../shared/utils/formatter";
 import { CreateActivityModal } from "../../activities/components/create-activity-modal";
+import { ConfirmDeleteActivityModal } from "../../activities/components/confirm-delete-activity-modal";
+import { toast } from "sonner";
+import type { Activity } from "../../activities/types/activity";
 
 export default function SubjectsDetailsPage() {
     const { subjectId } = useParams({ from: '/app/materias/$subjectId' });
@@ -12,14 +15,45 @@ export default function SubjectsDetailsPage() {
 
     const [isCreateActivityModalOpen, setIsCreateActivityModalOpen] = useState(false);
     const [selectedActivityId, setSelectedActivityId] = useState<number | null>(null);
+    const [isDeleteActivityModalOpen, setIsDeleteActivityModalOpen] = useState(false);
+    const [activityToDelete, setActivityToDelete] = useState<Activity | null>(null);
 
     const { useGetSubjectById } = useSubjectQueries();
     const { useGetActivitiesBySubject } = useActivityQueries();
+    const { useDeleteActivityMutation } = useActivityMutations();
 
     const { data: subject, isLoading: isLoadingSubject } = useGetSubjectById(Number(subjectId));
     const { data: activities = [], isLoading: isLoadingActivities } = useGetActivitiesBySubject(Number(subjectId));
+    const deleteActivityMutation = useDeleteActivityMutation();
 
     const selectedActivity = activities.find(a => a.id === selectedActivityId);
+
+    const handleDeleteActivity = (activity: Activity) => {
+        setActivityToDelete(activity);
+        setIsDeleteActivityModalOpen(true);
+    };
+
+    const confirmDeleteActivity = async () => {
+        if (!activityToDelete) return;
+
+        try {
+            await deleteActivityMutation.mutateAsync(activityToDelete.id);
+            toast.success('Atividade excluída com sucesso!');
+            setIsDeleteActivityModalOpen(false);
+            if (selectedActivityId === activityToDelete.id) {
+                setSelectedActivityId(null);
+            }
+            setActivityToDelete(null);
+        } catch (error) {
+            console.error('Erro ao excluir atividade:', error);
+            toast.error('Não foi possível excluir a atividade. Tente novamente.');
+        }
+    };
+
+    const handleEditActivity = (_activity: Activity) => {
+        // TODO: Implementar modal de edição
+        toast.info('Funcionalidade de edição em desenvolvimento');
+    };
 
     // Função para extrair apenas a primeira linha da descrição sem tags
     const getFirstLinePlainText = (description: string): string => {
@@ -290,10 +324,13 @@ export default function SubjectsDetailsPage() {
                           Descrição
                         </th>
                         <th className="px-6 py-4 text-center text-xs font-semibold text-white uppercase tracking-wider">
-                          Valor
+                          Nota
                         </th>
                         <th className="px-6 py-4 text-center text-xs font-semibold text-white uppercase tracking-wider">
                           Data Notificação
+                        </th>
+                        <th className="px-6 py-4 text-center text-xs font-semibold text-white uppercase tracking-wider">
+                          Ações
                         </th>
                       </tr>
                     </thead>
@@ -353,7 +390,7 @@ export default function SubjectsDetailsPage() {
                           </div>
                         </td>
 
-                        {/* Valor */}
+                        {/* Nota */}
                         <td className="px-6 py-4 text-center">
                           <div className="text-sm font-semibold text-gray-900">
                             {activity.value !== null && activity.value !== undefined && activity.value !== 0 ? (
@@ -382,6 +419,32 @@ export default function SubjectsDetailsPage() {
                             )}
                           </div>
                         </td>
+
+                        {/* Ações */}
+                        <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex justify-center space-x-2">
+                            <button
+                              onClick={() => handleEditActivity(activity)}
+                              className="p-2 text-blue-600 hover:text-white hover:bg-blue-600 rounded-lg transition-all duration-200"
+                              title="Editar atividade"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                            </button>
+                            
+                            <button
+                              onClick={() => handleDeleteActivity(activity)}
+                              disabled={deleteActivityMutation.isPending}
+                              className="p-2 text-red-600 hover:text-white hover:bg-red-600 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Excluir atividade"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                         ))}
                       </tbody>
@@ -389,10 +452,11 @@ export default function SubjectsDetailsPage() {
                   </div>
 
                   {/* Seção de Detalhes - 35% */}
-                  <div className="w-[35%] border-l border-gray-200">
+                  <div className="w-[35%] border-l border-gray-200 flex flex-col" style={{ height: '600px' }}>
                     {selectedActivity ? (
-                      <div className="p-6 h-full">
-                        <div className="mb-4">
+                      <div className="flex flex-col h-full">
+                        {/* Header fixo */}
+                        <div className="p-6 border-b border-gray-200 flex-shrink-0">
                           <h4 className="text-lg font-semibold text-gray-900 mb-2">
                             {selectedActivity.name}
                           </h4>
@@ -405,21 +469,24 @@ export default function SubjectsDetailsPage() {
                           </div>
                         </div>
 
-                        {selectedActivity.description ? (
-                          <div className="prose prose-sm max-w-none">
-                            <h5 className="text-sm font-semibold text-gray-700 mb-2">Descrição</h5>
-                            <div 
-                              className="text-sm text-gray-700"
-                              dangerouslySetInnerHTML={renderMarkdown(selectedActivity.description)}
-                            />
-                          </div>
-                        ) : (
-                          <div className="text-center py-8">
-                            <p className="text-gray-400 italic text-sm">
-                              Esta atividade não possui descrição
-                            </p>
-                          </div>
-                        )}
+                        {/* Conteúdo com scroll */}
+                        <div className="flex-1 overflow-y-auto p-6">
+                          {selectedActivity.description ? (
+                            <div className="prose prose-sm max-w-none">
+                              <h5 className="text-sm font-semibold text-gray-700 mb-3">Descrição</h5>
+                              <div 
+                                className="text-sm text-gray-700"
+                                dangerouslySetInnerHTML={renderMarkdown(selectedActivity.description)}
+                              />
+                            </div>
+                          ) : (
+                            <div className="text-center py-8">
+                              <p className="text-gray-400 italic text-sm">
+                                Esta atividade não possui descrição
+                              </p>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     ) : (
                       <div className="p-6 h-full flex items-center justify-center">
@@ -455,6 +522,18 @@ export default function SubjectsDetailsPage() {
             isOpen={isCreateActivityModalOpen}
             onClose={() => setIsCreateActivityModalOpen(false)}
             subjectId={Number(subjectId)}
+          />
+
+          {/* Confirm Delete Activity Modal */}
+          <ConfirmDeleteActivityModal
+            isOpen={isDeleteActivityModalOpen}
+            onClose={() => {
+              setIsDeleteActivityModalOpen(false);
+              setActivityToDelete(null);
+            }}
+            onConfirm={confirmDeleteActivity}
+            activity={activityToDelete}
+            isDeleting={deleteActivityMutation.isPending}
           />
         </div>
     );
