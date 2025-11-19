@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useUserMutations } from '../../features/auth/services';
+import { useUserMutations } from '../../features/auth/services/user';
 
 interface CreateUserModalProps {
   isOpen: boolean;

@@ -6,7 +6,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { Toaster } from 'sonner'
 import '../index.css'
 import { router } from './router'
-import { setupAuthInterceptors } from '../features/auth/services'
+import { setupAuthInterceptors } from '../features/auth/services/user'
 
 // Configura os interceptadores de autenticação antes de inicializar a aplicação
 setupAuthInterceptors();

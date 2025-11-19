@@ -4,7 +4,7 @@ import { persist } from "zustand/middleware";
 
 interface User {
     id: number;
-    name: string;
+    username: string;
     email: string;
 }
 
@@ -42,7 +42,7 @@ export const useAuthStore = create<AuthStore>()(
                 
                 try {
                     // Importação dinâmica para evitar dependência circular
-                    const { validateToken } = await import('../services');
+                    const { validateToken } = await import('../services/user');
                     const isValid = await validateToken();
                     
                     if (!isValid) {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useSubjectQueries } from '../services';
 import { useSubjectMutations } from '../services';
 import { CreateSubjectModal } from './create-subject-modal';
@@ -150,7 +150,8 @@ export function Materias() {
                 {subjects.map((subject) => (
                   <tr 
                     key={subject.id}
-                    className="hover:bg-gray-50 transition-all duration-200 group"
+                    className="hover:bg-gray-50 transition-all duration-200 group cursor-pointer"
+                    onClick={() => handleViewSubject(subject.id)}
                   >
                     {/* Nome */}
                     <td className="px-6 py-4">
@@ -184,8 +185,8 @@ export function Materias() {
                     </td>
 
                     {/* Criado em */}
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-700 max-w-xs">
+                    <td className="px-6 py-4 text-center">
+                      <div className="text-sm text-gray-700 max-w-xs mx-auto">
                         {formatDateTime(subject.createdAt).date}
                         <br />
                         {formatDateTime(subject.createdAt).time}
@@ -193,8 +194,8 @@ export function Materias() {
                     </td>
 
                     {/* Atualizado em */}
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-700 max-w-xs">
+                    <td className="px-6 py-4 text-center">
+                      <div className="text-sm text-gray-700 max-w-xs mx-auto">
                         {formatDateTime(subject.updatedAt).date}
                         <br />
                         {formatDateTime(subject.updatedAt).time}
@@ -217,7 +218,7 @@ export function Materias() {
                     </td>
 
                     {/* Ações */}
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                       <div className="flex justify-center space-x-2">
                         
                         <button

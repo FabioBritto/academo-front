@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import academoLogo from '../../assets/academo-logo.jpeg';
 import { useNavigate } from '@tanstack/react-router';
-import { useUserMutations } from '../../features/auth/services';
+import { useUserMutations } from '../../features/auth/services/user';
 
 const ActivateUser: React.FC = () => {
 
