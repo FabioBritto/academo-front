@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { AppSidebar } from "./app-side-bar";
+import { useAuthStore } from "../../../features/auth/hooks/use-auth-store";
+import { ProfileModal } from "../../../features/auth/components/ProfileModal";
 
 interface HeaderProps {
     children: React.ReactNode;
@@ -7,6 +9,8 @@ interface HeaderProps {
 
 export function Header({ children }: HeaderProps) {
     const [scrolled, setScrolled] = useState(false);
+    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+    const { user } = useAuthStore();
 
     const handleScroll = useCallback(() => {
         setScrolled(window.scrollY > 10);
@@ -39,12 +43,19 @@ export function Header({ children }: HeaderProps) {
                         
                         {/* User Menu */}
                         <div className="flex items-center space-x-4">
-                            <div className="flex items-center space-x-2">
+                            <button
+                                onClick={() => setIsProfileModalOpen(true)}
+                                className="flex items-center space-x-2 hover:bg-academo-peach/20 rounded-lg px-3 py-2 transition-colors cursor-pointer"
+                            >
                                 <div className="w-8 h-8 bg-academo-brown rounded-full flex items-center justify-center">
-                                    <span className="text-white text-sm font-medium">U</span>
+                                    <span className="text-white text-sm font-medium">
+                                        {user?.username?.[0]?.toUpperCase() || "M"}
+                                    </span>
                                 </div>
-                                <span className="text-sm font-medium text-academo-brown">Usuário</span>
-                            </div>
+                                <span className="text-sm font-medium text-academo-brown">
+                                    {user?.username || "Meu Perfil"}
+                                </span>
+                            </button>
                         </div>
                     </div>
                 </header>
@@ -54,6 +65,12 @@ export function Header({ children }: HeaderProps) {
                     {children}
                 </main>
             </div>
+
+            {/* Profile Modal */}
+            <ProfileModal 
+                isOpen={isProfileModalOpen} 
+                onClose={() => setIsProfileModalOpen(false)} 
+            />
         </div>
     );
 }

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useUserMutations } from '../../features/auth/services';
+import { useUserMutations } from '../../features/auth/services/user';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { useAuthStore } from '../../features/auth/hooks/use-auth-store';
@@ -67,14 +67,13 @@ export function LoginModal({ isOpen, onClose, onCreateAccount }: LoginModalProps
         password: formData.password,
         token: '' // Campo obrigatório na interface, mas não usado no login
       });
-      
 
       const token = userData.token;
       
       // Salva o estado de autenticação no store
       login(token, {
-        id: userData.id,
-        name: userData.name,
+        id: userData.userId,
+        username: userData.username,
         email: userData.email,
       });
       

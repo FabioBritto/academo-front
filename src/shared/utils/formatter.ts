@@ -1,6 +1,14 @@
 export const formatDateTime = (d: Date) => {
-  const date = new Date(d).toLocaleString().split(',')[0];
-  const time = new Date(d).toLocaleString().split(',')[1].replace('AM', '').replace('PM', '');
+  const date = new Date(d).toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+  const time = new Date(d).toLocaleTimeString('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
   const formattedDate = {
     date: date,
     time: time

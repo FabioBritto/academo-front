@@ -1,36 +1,36 @@
 import React, { useState } from 'react';
-import { useGroupMutations } from '../services';
+import { useTypeActivityMutations } from '../services/type-activity';
 import { toast } from 'sonner';
+import { PlusIcon } from 'lucide-react';
 
-interface CreateGroupModalProps {
+interface CreateTypeActivityModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
-export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
+export function CreateTypeActivityModal({ isOpen, onClose, onSuccess }: CreateTypeActivityModalProps) {
   const [formData, setFormData] = useState({
     name: '',
     description: ''
   });
   
   const [errors, setErrors] = useState({
-    name: '',
-    description: ''
+    name: ''
   });
   
   const [isLoading, setIsLoading] = useState(false);
-  const { useCreateGroupMutation } = useGroupMutations();
-  const createGroupMutation = useCreateGroupMutation();
+  const { useCreateTypeActivityMutation } = useTypeActivityMutations();
+  const createTypeActivityMutation = useCreateTypeActivityMutation();
 
   const validateForm = () => {
     const newErrors = {
-      name: '',
-      description: ''
+      name: ''
     };
 
     // Validação de nome
     if (!formData.name.trim()) {
-      newErrors.name = 'Nome do grupo é obrigatório';
+      newErrors.name = 'Nome do tipo de atividade é obrigatório';
     } else if (formData.name.trim().length < 3) {
       newErrors.name = 'Nome deve ter pelo menos 3 caracteres';
     }
@@ -49,18 +49,21 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
     setIsLoading(true);
     
     try {
-      const createGroupDTO = {
+      const payload = {
         name: formData.name.trim(),
-        description: formData.description.trim(),
+        description: formData.description.trim() || undefined,
       };
       
-      const response = await createGroupMutation.mutateAsync(createGroupDTO);
-      toast.success('Grupo criado com sucesso!');
+      await createTypeActivityMutation.mutateAsync(payload);
+      toast.success('Tipo de atividade criado com sucesso!');
       
       handleClose();
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (error) {
-      console.error('Erro ao criar grupo:', error);
-      toast.error('Não foi possível criar o grupo. Tente novamente.');
+      console.error('Erro ao criar tipo de atividade:', error);
+      toast.error('Não foi possível criar o tipo de atividade. Tente novamente.');
     } finally {
       setIsLoading(false);
     }
@@ -78,8 +81,11 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
   const handleClose = () => {
     if (!isLoading) {
       onClose();
-      setFormData({ name: '', description: '' });
-      setErrors({ name: '', description: '' });
+      setFormData({ 
+        name: '', 
+        description: '' 
+      });
+      setErrors({ name: '' });
     }
   };
 
@@ -100,7 +106,7 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
           <div className="bg-academo-brown px-6 py-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-white">
-                Criar Novo Grupo
+                Criar Novo Tipo de Atividade
               </h3>
               <button
                 onClick={handleClose}
@@ -113,81 +119,81 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
               </button>
             </div>
             <p className="text-orange-100 text-sm mt-1">
-              Preencha os dados abaixo para criar um novo grupo de estudo
+              Preencha os dados abaixo para criar um novo tipo de atividade
             </p>
           </div>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="px-6 py-6">
-            {/* Nome do Grupo */}
-            <div className="mb-4">
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                Nome do Grupo *
-              </label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-academo-brown focus:border-academo-brown ${
-                  errors.name ? 'border-red-500' : 'border-gray-300'
-                }`}
-                placeholder="Ex: Estudo de Matemática"
-                disabled={isLoading}
-                maxLength={100}
-              />
-              {errors.name && (
-                <p className="mt-1 text-sm text-red-600">{errors.name}</p>
-              )}
+            <div className="space-y-4">
+              {/* Nome */}
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                  Nome <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-academo-brown ${
+                    errors.name ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  disabled={isLoading}
+                  placeholder="Ex: Prova, Trabalho, Apresentação"
+                />
+                {errors.name && (
+                  <p className="mt-1 text-sm text-red-500">{errors.name}</p>
+                )}
+              </div>
+
+              {/* Descrição */}
+              <div>
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                  Descrição
+                </label>
+                <textarea
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-academo-brown"
+                  disabled={isLoading}
+                  placeholder="Descrição do tipo de atividade (opcional)"
+                />
+              </div>
             </div>
 
-            {/* Descrição */}
-            <div className="mb-6">
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-                Descrição (opcional)
-              </label>
-              <textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-academo-brown focus:border-academo-brown"
-                placeholder="Descrição do grupo de estudo..."
-                disabled={isLoading}
-                maxLength={500}
-              />
-              <p className="mt-1 text-xs text-gray-500">
-                {formData.description.length}/500 caracteres
-              </p>
-            </div>
-
-            {/* Botões */}
-            <div className="flex space-x-3">
+            {/* Footer */}
+            <div className="mt-6 flex justify-end space-x-3">
               <button
                 type="button"
                 onClick={handleClose}
                 disabled={isLoading}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-academo-brown disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={isLoading}
-                className="flex-1 px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-academo-brown hover:bg-academo-sage focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-academo-brown disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-4 py-2 bg-academo-brown text-white rounded-lg hover:bg-academo-sage transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
               >
                 {isLoading ? (
-                  <div className="flex items-center justify-center">
+                  <>
                     <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                     Criando...
-                  </div>
+                  </>
                 ) : (
-                  'Criar Grupo'
+                  <>
+                    <PlusIcon className="w-4 h-4 mr-2" />
+                    Criar Tipo
+                  </>
                 )}
               </button>
             </div>
@@ -196,4 +202,5 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
       </div>
     </div>
   );
-} 
+}
+
