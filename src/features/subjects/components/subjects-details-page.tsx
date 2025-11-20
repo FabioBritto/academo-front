@@ -1,13 +1,15 @@
 import { useParams, useNavigate } from "@tanstack/react-router";
-import { useSubjectQueries } from "../services";
+import { useSubjectQueries, useSubjectMutations } from "../services";
 import { useActivityQueries, useActivityMutations } from "../../activities/services/activity/index";
 import { useFileQueries } from "../../files/services/file";
-import { ArrowLeft, Calendar, Clock, BookOpen, PlusIcon, FileText } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, BookOpen, PlusIcon, FileText, Edit, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { formatDateTime } from "../../../shared/utils/formatter";
 import { CreateActivityModal } from "../../activities/components/create-activity-modal";
 import { ConfirmDeleteActivityModal } from "../../activities/components/confirm-delete-activity-modal";
 import { UploadFileModal } from "../../files/components/upload-file-modal";
+import { UpdateSubjectModal } from "./update-subject-modal";
+import { ConfirmDeleteSubjectModal } from "./confirm-delete-subject-modal";
 import { toast } from "sonner";
 import type { Activity } from "../../activities/types/activity";
 
@@ -23,16 +25,20 @@ export default function SubjectsDetailsPage() {
     const [activeTab, setActiveTab] = useState<'activities' | 'files'>('activities');
     const [isUploadFileModalOpen, setIsUploadFileModalOpen] = useState(false);
     const [selectedFileUuid, setSelectedFileUuid] = useState<string | null>(null);
+    const [isUpdateSubjectModalOpen, setIsUpdateSubjectModalOpen] = useState(false);
+    const [isDeleteSubjectModalOpen, setIsDeleteSubjectModalOpen] = useState(false);
 
     const { useGetSubjectById } = useSubjectQueries();
     const { useGetActivitiesBySubject } = useActivityQueries();
     const { useDeleteActivityMutation } = useActivityMutations();
     const { useGetFilesBySubject } = useFileQueries();
+    const { useDeleteSubjectMutation } = useSubjectMutations();
 
     const { data: subject, isLoading: isLoadingSubject } = useGetSubjectById(Number(subjectId));
     const { data: activities = [], isLoading: isLoadingActivities } = useGetActivitiesBySubject(Number(subjectId));
     const { data: files = [], isLoading: isLoadingFiles } = useGetFilesBySubject(Number(subjectId));
     const deleteActivityMutation = useDeleteActivityMutation();
+    const deleteSubjectMutation = useDeleteSubjectMutation();
 
     const selectedActivity = activities.find(a => a.id === selectedActivityId);
     const selectedFile = files.find(f => f.uuid === selectedFileUuid);
@@ -67,6 +73,27 @@ export default function SubjectsDetailsPage() {
     const handleCloseActivityModal = () => {
         setIsCreateActivityModalOpen(false);
         setActivityToEdit(null);
+    };
+
+    const handleEditSubject = () => {
+        setIsUpdateSubjectModalOpen(true);
+    };
+
+    const handleDeleteSubject = () => {
+        setIsDeleteSubjectModalOpen(true);
+    };
+
+    const confirmDeleteSubject = async () => {
+        if (!subject) return;
+
+        try {
+            await deleteSubjectMutation.mutateAsync(subject.id);
+            toast.success('Matéria excluída com sucesso!');
+            navigate({ to: '/app/materias' });
+        } catch (error) {
+            console.error('Erro ao excluir matéria:', error);
+            toast.error('Não foi possível excluir a matéria. Tente novamente.');
+        }
     };
 
     // Função para extrair apenas a primeira linha da descrição sem tags
@@ -302,13 +329,35 @@ export default function SubjectsDetailsPage() {
                     </div>
                   </div>
                   
-                  {/* Status Badge */}
-                  <div className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${
-                    subject.isActive 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    {subject.isActive ? 'Ativo' : 'Inativo'}
+                  {/* Status Badge e Botões de Ação */}
+                  <div className="flex items-center space-x-3">
+                    <div className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${
+                      subject.isActive 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {subject.isActive ? 'Ativo' : 'Inativo'}
+                    </div>
+                    
+                    {/* Botões de Edição e Exclusão */}
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={handleEditSubject}
+                        className="p-2 text-blue-600 hover:text-white hover:bg-blue-600 rounded-lg transition-all duration-200"
+                        title="Editar matéria"
+                      >
+                        <Edit className="w-5 h-5" />
+                      </button>
+                      
+                      <button
+                        onClick={handleDeleteSubject}
+                        disabled={deleteSubjectMutation.isPending}
+                        className="p-2 text-red-600 hover:text-white hover:bg-red-600 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Excluir matéria"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -380,8 +429,13 @@ export default function SubjectsDetailsPage() {
                 {activeTab === 'activities' && (
                   <button
                     onClick={() => setIsCreateActivityModalOpen(true)}
-                    className="bg-academo-brown hover:bg-academo-sage text-white px-4 py-2 rounded-lg font-medium transition duration-300 flex items-center"
-                    title="Adicionar nova atividade"
+                    disabled={!subject?.isActive}
+                    className={`px-4 py-2 rounded-lg font-medium transition duration-300 flex items-center ${
+                      subject?.isActive
+                        ? 'bg-academo-brown hover:bg-academo-sage text-white'
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }`}
+                    title={!subject?.isActive ? 'Matéria inativa - Não é possível gerenciar atividades' : 'Adicionar nova atividade'}
                   >
                     <PlusIcon className="w-4 h-4 mr-2" />
                     Nova Atividade
@@ -404,6 +458,13 @@ export default function SubjectsDetailsPage() {
             {activeTab === 'activities' ? (
               /* Tab Atividades */
               <>
+              {!subject?.isActive && (
+                <div className="px-6 py-3 bg-yellow-50 border-b border-yellow-200">
+                  <p className="text-sm text-yellow-800">
+                    <span className="font-medium">Matéria inativa:</span> Não é possível criar, editar ou excluir atividades.
+                  </p>
+                </div>
+              )}
               {isLoadingActivities ? (
               <div className="p-8 text-center">
                 <div className="inline-flex items-center space-x-2">
@@ -415,7 +476,7 @@ export default function SubjectsDetailsPage() {
                 </div>
               </div>
             ) : activities.length > 0 ? (
-              <div className="flex gap-4">
+              <div className={`flex gap-4 ${!subject?.isActive ? 'opacity-60' : ''}`}>
                 {/* Tabela - 65% */}
                 <div className="w-[65%] overflow-x-auto">
                   <table className="w-full">
@@ -535,8 +596,13 @@ export default function SubjectsDetailsPage() {
                           <div className="flex justify-center space-x-2">
                             <button
                               onClick={() => handleEditActivity(activity)}
-                              className="p-2 text-blue-600 hover:text-white hover:bg-blue-600 rounded-lg transition-all duration-200"
-                              title="Editar atividade"
+                              disabled={!subject?.isActive}
+                              className={`p-2 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+                                subject?.isActive
+                                  ? 'text-blue-600 hover:text-white hover:bg-blue-600'
+                                  : 'text-gray-400 cursor-not-allowed'
+                              }`}
+                              title={!subject?.isActive ? 'Matéria inativa - Não é possível editar atividades' : 'Editar atividade'}
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -545,9 +611,13 @@ export default function SubjectsDetailsPage() {
                             
                             <button
                               onClick={() => handleDeleteActivity(activity)}
-                              disabled={deleteActivityMutation.isPending}
-                              className="p-2 text-red-600 hover:text-white hover:bg-red-600 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                              title="Excluir atividade"
+                              disabled={deleteActivityMutation.isPending || !subject?.isActive}
+                              className={`p-2 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+                                subject?.isActive
+                                  ? 'text-red-600 hover:text-white hover:bg-red-600'
+                                  : 'text-gray-400 cursor-not-allowed'
+                              }`}
+                              title={!subject?.isActive ? 'Matéria inativa - Não é possível excluir atividades' : 'Excluir atividade'}
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -861,6 +931,22 @@ export default function SubjectsDetailsPage() {
             onUploadSuccess={() => {
               // A invalidação das queries já é feita automaticamente pela mutation
             }}
+          />
+
+          {/* Update Subject Modal */}
+          <UpdateSubjectModal
+            isOpen={isUpdateSubjectModalOpen}
+            onClose={() => setIsUpdateSubjectModalOpen(false)}
+            subject={subject || null}
+          />
+
+          {/* Confirm Delete Subject Modal */}
+          <ConfirmDeleteSubjectModal
+            isOpen={isDeleteSubjectModalOpen}
+            onClose={() => setIsDeleteSubjectModalOpen(false)}
+            onConfirm={confirmDeleteSubject}
+            subject={subject || null}
+            isDeleting={deleteSubjectMutation.isPending}
           />
         </div>
     );
