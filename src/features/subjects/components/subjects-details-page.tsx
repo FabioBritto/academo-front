@@ -10,7 +10,6 @@ import { ConfirmDeleteActivityModal } from "../../activities/components/confirm-
 import { UploadFileModal } from "../../files/components/upload-file-modal";
 import { toast } from "sonner";
 import type { Activity } from "../../activities/types/activity";
-import type { FileDTO } from "../../files/types/file";
 
 export default function SubjectsDetailsPage() {
     const { subjectId } = useParams({ from: '/app/materias/$subjectId' });
@@ -234,6 +233,13 @@ export default function SubjectsDetailsPage() {
         };
 
         return mimeToExt[fileType] || fileType.split('/').pop()?.toUpperCase() || 'FILE';
+    };
+
+    // Função para remover a extensão do nome do arquivo
+    const removeFileExtension = (fileName: string): string => {
+        const lastDotIndex = fileName.lastIndexOf('.');
+        if (lastDotIndex === -1) return fileName;
+        return fileName.substring(0, lastDotIndex);
     };
 
 
@@ -676,7 +682,7 @@ export default function SubjectsDetailsPage() {
                             <td className="px-6 py-4">
                               <div className="flex items-center">
                                 <FileText className="w-5 h-5 text-gray-400 mr-3" />
-                                <span className="text-sm font-medium text-gray-900 group-hover:text-academo-brown transition-colors">{file.fileName}</span>
+                                <span className="text-sm font-medium text-gray-900 group-hover:text-academo-brown transition-colors">{removeFileExtension(file.fileName)}</span>
                               </div>
                             </td>
                             <td className="px-6 py-4">

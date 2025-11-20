@@ -26,6 +26,7 @@ export interface UpdateGroupDTO {
     name?: string;
     description?: string;
     isActive?: boolean;
+    subjectsId?: number[];
 }
 
 export interface RemoveSubjectDTO {
