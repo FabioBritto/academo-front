@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useGroupMutations } from '../services';
+import { useSubjectQueries } from '../../subjects/services';
 import { toast } from 'sonner';
 import { Switch } from '../../../shared/components/ui/switch';
 import type { GroupDTO } from '../types/group';
@@ -24,7 +25,11 @@ export function UpdateGroupModal({ isOpen, onClose, group }: UpdateGroupModalPro
   
   const [isLoading, setIsLoading] = useState(false);
   const { useUpdateGroupMutation } = useGroupMutations();
+  const { useGetSubjectsByGroup } = useSubjectQueries();
   const updateGroupMutation = useUpdateGroupMutation();
+  
+  // Buscar subjects do grupo quando o modal abrir
+  const { data: groupSubjects = [] } = useGetSubjectsByGroup(group?.id || 0);
 
   // Preencher o formulário quando o grupo mudar
   useEffect(() => {
@@ -64,10 +69,14 @@ export function UpdateGroupModal({ isOpen, onClose, group }: UpdateGroupModalPro
     setIsLoading(true);
     
     try {
+      // Obter os IDs dos subjects associados ao grupo
+      const subjectsId = groupSubjects.map(subject => subject.id);
+      
       const updateGroupDTO = {
         name: formData.name.trim(),
         description: formData.description.trim(),
-        isActive: formData.isActive
+        isActive: formData.isActive,
+        subjectsId: subjectsId
       };
       
       await updateGroupMutation.mutateAsync({

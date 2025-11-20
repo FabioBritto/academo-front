@@ -1,11 +1,15 @@
 import { useParams, useNavigate } from "@tanstack/react-router";
-import { useSubjectQueries } from "../services";
+import { useSubjectQueries, useSubjectMutations } from "../services";
 import { useActivityQueries, useActivityMutations } from "../../activities/services/activity/index";
-import { ArrowLeft, Calendar, Clock, BookOpen, PlusIcon } from "lucide-react";
+import { useFileQueries } from "../../files/services/file";
+import { ArrowLeft, Calendar, Clock, BookOpen, PlusIcon, FileText, Edit, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { formatDateTime } from "../../../shared/utils/formatter";
 import { CreateActivityModal } from "../../activities/components/create-activity-modal";
 import { ConfirmDeleteActivityModal } from "../../activities/components/confirm-delete-activity-modal";
+import { UploadFileModal } from "../../files/components/upload-file-modal";
+import { UpdateSubjectModal } from "./update-subject-modal";
+import { ConfirmDeleteSubjectModal } from "./confirm-delete-subject-modal";
 import { toast } from "sonner";
 import type { Activity } from "../../activities/types/activity";
 
@@ -18,16 +22,26 @@ export default function SubjectsDetailsPage() {
     const [isDeleteActivityModalOpen, setIsDeleteActivityModalOpen] = useState(false);
     const [activityToDelete, setActivityToDelete] = useState<Activity | null>(null);
     const [activityToEdit, setActivityToEdit] = useState<Activity | null>(null);
+    const [activeTab, setActiveTab] = useState<'activities' | 'files'>('activities');
+    const [isUploadFileModalOpen, setIsUploadFileModalOpen] = useState(false);
+    const [selectedFileUuid, setSelectedFileUuid] = useState<string | null>(null);
+    const [isUpdateSubjectModalOpen, setIsUpdateSubjectModalOpen] = useState(false);
+    const [isDeleteSubjectModalOpen, setIsDeleteSubjectModalOpen] = useState(false);
 
     const { useGetSubjectById } = useSubjectQueries();
     const { useGetActivitiesBySubject } = useActivityQueries();
     const { useDeleteActivityMutation } = useActivityMutations();
+    const { useGetFilesBySubject } = useFileQueries();
+    const { useDeleteSubjectMutation } = useSubjectMutations();
 
     const { data: subject, isLoading: isLoadingSubject } = useGetSubjectById(Number(subjectId));
     const { data: activities = [], isLoading: isLoadingActivities } = useGetActivitiesBySubject(Number(subjectId));
+    const { data: files = [], isLoading: isLoadingFiles } = useGetFilesBySubject(Number(subjectId));
     const deleteActivityMutation = useDeleteActivityMutation();
+    const deleteSubjectMutation = useDeleteSubjectMutation();
 
     const selectedActivity = activities.find(a => a.id === selectedActivityId);
+    const selectedFile = files.find(f => f.uuid === selectedFileUuid);
 
     const handleDeleteActivity = (activity: Activity) => {
         setActivityToDelete(activity);
@@ -59,6 +73,27 @@ export default function SubjectsDetailsPage() {
     const handleCloseActivityModal = () => {
         setIsCreateActivityModalOpen(false);
         setActivityToEdit(null);
+    };
+
+    const handleEditSubject = () => {
+        setIsUpdateSubjectModalOpen(true);
+    };
+
+    const handleDeleteSubject = () => {
+        setIsDeleteSubjectModalOpen(true);
+    };
+
+    const confirmDeleteSubject = async () => {
+        if (!subject) return;
+
+        try {
+            await deleteSubjectMutation.mutateAsync(subject.id);
+            toast.success('Matéria excluída com sucesso!');
+            navigate({ to: '/app/materias' });
+        } catch (error) {
+            console.error('Erro ao excluir matéria:', error);
+            toast.error('Não foi possível excluir a matéria. Tente novamente.');
+        }
     };
 
     // Função para extrair apenas a primeira linha da descrição sem tags
@@ -183,6 +218,57 @@ export default function SubjectsDetailsPage() {
             .replace(/<u>(.*?)<\/u>/g, '<u>$1</u>');
     };
 
+    // Função para formatar tamanho de arquivo
+    const formatFileSize = (bytes: number): string => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    };
+
+    // Função para obter a URL do arquivo
+    const getFileUrl = (path: string): string => {
+        const baseUrl = 'http://localhost:8080';
+        // Garante que o path comece com /
+        const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+        return `${baseUrl}${normalizedPath}`;
+    };
+
+    // Função para obter a extensão do arquivo de forma amigável
+    const getFileExtension = (fileType: string, fileName: string): string => {
+        // Primeiro tenta pegar do nome do arquivo
+        const fileNameExt = fileName.split('.').pop()?.toUpperCase();
+        if (fileNameExt) {
+            return fileNameExt;
+        }
+
+        // Mapeamento de MIME types para extensões
+        const mimeToExt: Record<string, string> = {
+            'application/pdf': 'PDF',
+            'application/msword': 'DOC',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'DOCX',
+            'application/vnd.ms-excel': 'XLS',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'XLSX',
+            'application/vnd.ms-powerpoint': 'PPT',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'PPTX',
+            'image/jpeg': 'JPEG',
+            'image/jpg': 'JPEG',
+            'image/png': 'PNG',
+            'image/gif': 'GIF',
+            'image/webp': 'WEBP',
+        };
+
+        return mimeToExt[fileType] || fileType.split('/').pop()?.toUpperCase() || 'FILE';
+    };
+
+    // Função para remover a extensão do nome do arquivo
+    const removeFileExtension = (fileName: string): string => {
+        const lastDotIndex = fileName.lastIndexOf('.');
+        if (lastDotIndex === -1) return fileName;
+        return fileName.substring(0, lastDotIndex);
+    };
+
 
     const handleGoBack = () => {
         navigate({ to: '/app/materias' });
@@ -243,13 +329,35 @@ export default function SubjectsDetailsPage() {
                     </div>
                   </div>
                   
-                  {/* Status Badge */}
-                  <div className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${
-                    subject.isActive 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    {subject.isActive ? 'Ativo' : 'Inativo'}
+                  {/* Status Badge e Botões de Ação */}
+                  <div className="flex items-center space-x-3">
+                    <div className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${
+                      subject.isActive 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {subject.isActive ? 'Ativo' : 'Inativo'}
+                    </div>
+                    
+                    {/* Botões de Edição e Exclusão */}
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={handleEditSubject}
+                        className="p-2 text-blue-600 hover:text-white hover:bg-blue-600 rounded-lg transition-all duration-200"
+                        title="Editar matéria"
+                      >
+                        <Edit className="w-5 h-5" />
+                      </button>
+                      
+                      <button
+                        onClick={handleDeleteSubject}
+                        disabled={deleteSubjectMutation.isPending}
+                        className="p-2 text-red-600 hover:text-white hover:bg-red-600 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Excluir matéria"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -279,28 +387,85 @@ export default function SubjectsDetailsPage() {
             )}
           </div>
 
-          {/* Lista de Atividades */}
+          {/* Tabs: Atividades e Arquivos */}
           <div className="bg-white rounded-lg shadow-sm border">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Atividades da Matéria</h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Lista de atividades associadas a esta matéria
-                  </p>
+            {/* Tabs Header */}
+            <div className="border-b border-gray-200">
+              <div className="flex items-center justify-between px-6">
+                <div className="flex space-x-1">
+                  <button
+                    onClick={() => {
+                      setActiveTab('activities');
+                      setSelectedFileUuid(null);
+                    }}
+                    className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
+                      activeTab === 'activities'
+                        ? 'border-academo-brown text-academo-brown'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <BookOpen className="w-4 h-4" />
+                      Atividades
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActiveTab('files');
+                      setSelectedActivityId(null);
+                    }}
+                    className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
+                      activeTab === 'files'
+                        ? 'border-academo-brown text-academo-brown'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-4 h-4" />
+                      Arquivos
+                    </div>
+                  </button>
                 </div>
-                <button
-                  onClick={() => setIsCreateActivityModalOpen(true)}
-                  className="bg-academo-brown hover:bg-academo-sage text-white px-4 py-2 rounded-lg font-medium transition duration-300 flex items-center"
-                  title="Adicionar nova atividade"
-                >
-                  <PlusIcon className="w-4 h-4 mr-2" />
-                  Nova Atividade
-                </button>
+                {activeTab === 'activities' && (
+                  <button
+                    onClick={() => setIsCreateActivityModalOpen(true)}
+                    disabled={!subject?.isActive}
+                    className={`px-4 py-2 rounded-lg font-medium transition duration-300 flex items-center ${
+                      subject?.isActive
+                        ? 'bg-academo-brown hover:bg-academo-sage text-white'
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }`}
+                    title={!subject?.isActive ? 'Matéria inativa - Não é possível gerenciar atividades' : 'Adicionar nova atividade'}
+                  >
+                    <PlusIcon className="w-4 h-4 mr-2" />
+                    Nova Atividade
+                  </button>
+                )}
+                {activeTab === 'files' && (
+                  <button
+                    onClick={() => setIsUploadFileModalOpen(true)}
+                    className="bg-academo-brown hover:bg-academo-sage text-white px-4 py-2 rounded-lg font-medium transition duration-300 flex items-center"
+                    title="Adicionar arquivo"
+                  >
+                    <PlusIcon className="w-4 h-4 mr-2" />
+                    Adicionar Arquivo
+                  </button>
+                )}
               </div>
             </div>
 
-            {isLoadingActivities ? (
+            {/* Tab Content */}
+            {activeTab === 'activities' ? (
+              /* Tab Atividades */
+              <>
+              {!subject?.isActive && (
+                <div className="px-6 py-3 bg-yellow-50 border-b border-yellow-200">
+                  <p className="text-sm text-yellow-800">
+                    <span className="font-medium">Matéria inativa:</span> Não é possível criar, editar ou excluir atividades.
+                  </p>
+                </div>
+              )}
+              {isLoadingActivities ? (
               <div className="p-8 text-center">
                 <div className="inline-flex items-center space-x-2">
                   <svg className="animate-spin h-5 w-5 text-academo-brown" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -311,7 +476,7 @@ export default function SubjectsDetailsPage() {
                 </div>
               </div>
             ) : activities.length > 0 ? (
-              <div className="flex gap-4">
+              <div className={`flex gap-4 ${!subject?.isActive ? 'opacity-60' : ''}`}>
                 {/* Tabela - 65% */}
                 <div className="w-[65%] overflow-x-auto">
                   <table className="w-full">
@@ -431,8 +596,13 @@ export default function SubjectsDetailsPage() {
                           <div className="flex justify-center space-x-2">
                             <button
                               onClick={() => handleEditActivity(activity)}
-                              className="p-2 text-blue-600 hover:text-white hover:bg-blue-600 rounded-lg transition-all duration-200"
-                              title="Editar atividade"
+                              disabled={!subject?.isActive}
+                              className={`p-2 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+                                subject?.isActive
+                                  ? 'text-blue-600 hover:text-white hover:bg-blue-600'
+                                  : 'text-gray-400 cursor-not-allowed'
+                              }`}
+                              title={!subject?.isActive ? 'Matéria inativa - Não é possível editar atividades' : 'Editar atividade'}
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -441,9 +611,13 @@ export default function SubjectsDetailsPage() {
                             
                             <button
                               onClick={() => handleDeleteActivity(activity)}
-                              disabled={deleteActivityMutation.isPending}
-                              className="p-2 text-red-600 hover:text-white hover:bg-red-600 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                              title="Excluir atividade"
+                              disabled={deleteActivityMutation.isPending || !subject?.isActive}
+                              className={`p-2 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+                                subject?.isActive
+                                  ? 'text-red-600 hover:text-white hover:bg-red-600'
+                                  : 'text-gray-400 cursor-not-allowed'
+                              }`}
+                              title={!subject?.isActive ? 'Matéria inativa - Não é possível excluir atividades' : 'Excluir atividade'}
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -517,20 +691,215 @@ export default function SubjectsDetailsPage() {
                     )}
                   </div>
                 </div>
-            ) : (
-              <div className="p-6">
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
-                  <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                    <BookOpen className="w-8 h-8 text-gray-400" />
+              ) : (
+                <div className="p-6">
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                      <BookOpen className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      Nenhuma atividade encontrada
+                    </h3>
+                    <p className="text-gray-600 text-sm">
+                      Esta matéria ainda não possui atividades associadas.
+                    </p>
                   </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    Nenhuma atividade encontrada
-                  </h3>
-                  <p className="text-gray-600 text-sm">
-                    Esta matéria ainda não possui atividades associadas.
-                  </p>
                 </div>
-              </div>
+              )}
+              </>
+            ) : (
+              /* Tab Arquivos */
+              isLoadingFiles ? (
+                <div className="p-8 text-center">
+                  <div className="inline-flex items-center space-x-2">
+                    <svg className="animate-spin h-5 w-5 text-academo-brown" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span className="text-gray-600">Carregando arquivos...</span>
+                  </div>
+                </div>
+              ) : files.length > 0 ? (
+                <div className="flex gap-4">
+                  {/* Tabela - 65% */}
+                  <div className="w-[65%] overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gradient-to-r from-academo-brown to-academo-sage">
+                        <tr>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                            Nome do Arquivo
+                          </th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                            Tipo
+                          </th>
+                          <th className="px-6 py-4 text-center text-xs font-semibold text-white uppercase tracking-wider">
+                            Tamanho
+                          </th>
+                          <th className="px-6 py-4 text-center text-xs font-semibold text-white uppercase tracking-wider">
+                            Criado em
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-100">
+                        {files.map((file) => (
+                          <tr 
+                            key={file.uuid}
+                            onClick={() => setSelectedFileUuid(file.uuid)}
+                            className={`hover:bg-gray-50 transition-all duration-200 group cursor-pointer ${
+                              selectedFileUuid === file.uuid ? 'bg-academo-brown/10' : ''
+                            }`}
+                          >
+                            <td className="px-6 py-4">
+                              <div className="flex items-center">
+                                <FileText className="w-5 h-5 text-gray-400 mr-3" />
+                                <span className="text-sm font-medium text-gray-900 group-hover:text-academo-brown transition-colors">{removeFileExtension(file.fileName)}</span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="text-sm text-gray-700">{getFileExtension(file.fileType, file.fileName)}</span>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <span className="text-sm text-gray-700">
+                                {formatFileSize(file.size)}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <div className="text-sm text-gray-700">
+                                {formatDateTime(new Date(file.createdAt)).date}
+                                <br />
+                                <span className="text-xs text-gray-500">
+                                  {formatDateTime(new Date(file.createdAt)).time}
+                                </span>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Seção de Visualização do Arquivo - 35% */}
+                  <div className="w-[35%] border-l border-gray-200 flex flex-col" style={{ height: '600px' }}>
+                    {selectedFile ? (
+                      <div className="flex flex-col h-full">
+                        {/* Header fixo */}
+                        <div className="p-6 border-b border-gray-200 flex-shrink-0">
+                          <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                            {selectedFile.fileName}
+                          </h4>
+                          <div className="space-y-1 text-sm text-gray-600">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">Tipo:</span>
+                              <span>{getFileExtension(selectedFile.fileType, selectedFile.fileName)}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">Tamanho:</span>
+                              <span>{formatFileSize(selectedFile.size)}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Calendar className="w-4 h-4" />
+                              <span className="font-medium">Criado em:</span>
+                              <span>{formatDateTime(new Date(selectedFile.createdAt)).date}</span>
+                              <span className="mx-1">•</span>
+                              <span>{formatDateTime(new Date(selectedFile.createdAt)).time}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Conteúdo com scroll */}
+                        <div className="flex-1 overflow-y-auto p-6">
+                          <div className="flex flex-col items-center justify-center h-full">
+                            {/* Preview baseado no tipo de arquivo */}
+                            {selectedFile.fileType.startsWith('image/') ? (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <img 
+                                  src={getFileUrl(selectedFile.path)}
+                                  alt={selectedFile.fileName}
+                                  className="max-w-full max-h-full object-contain rounded-lg shadow-sm"
+                                  onError={(e) => {
+                                    const fallback = e.currentTarget.parentElement?.nextElementSibling;
+                                    if (fallback) {
+                                      e.currentTarget.parentElement!.style.display = 'none';
+                                      fallback.classList.remove('hidden');
+                                    }
+                                  }}
+                                />
+                              </div>
+                            ) : selectedFile.fileType === 'application/pdf' ? (
+                              <iframe
+                                src={getFileUrl(selectedFile.path)}
+                                className="w-full h-full min-h-[500px] border rounded-lg"
+                                title={selectedFile.fileName}
+                              />
+                            ) : (
+                              <div className="text-center">
+                                <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                                <p className="text-gray-600 mb-4">
+                                  Visualização não disponível para este tipo de arquivo
+                                </p>
+                                <a
+                                  href={getFileUrl(selectedFile.path)}
+                                  download={selectedFile.fileName}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center px-4 py-2 bg-academo-brown text-white rounded-lg hover:bg-academo-sage transition-colors"
+                                >
+                                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                  </svg>
+                                  Baixar Arquivo
+                                </a>
+                              </div>
+                            )}
+                            {/* Fallback para imagens com erro */}
+                            <div className="hidden text-center">
+                              <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                              <p className="text-gray-600 mb-4">
+                                Não foi possível carregar a visualização
+                              </p>
+                              <a
+                                href={getFileUrl(selectedFile.path)}
+                                download={selectedFile.fileName}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center px-4 py-2 bg-academo-brown text-white rounded-lg hover:bg-academo-sage transition-colors"
+                              >
+                                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                Baixar Arquivo
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-6 h-full flex items-center justify-center">
+                        <div className="text-center">
+                          <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                          <p className="text-gray-500 text-sm">
+                            Clique em um arquivo para visualizá-lo
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="p-6">
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                      <FileText className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      Nenhum arquivo encontrado
+                    </h3>
+                    <p className="text-gray-600 text-sm">
+                      Esta matéria ainda não possui arquivos associados.
+                    </p>
+                  </div>
+                </div>
+              )
             )}
           </div>
 
@@ -552,6 +921,32 @@ export default function SubjectsDetailsPage() {
             onConfirm={confirmDeleteActivity}
             activity={activityToDelete}
             isDeleting={deleteActivityMutation.isPending}
+          />
+
+          {/* Upload File Modal */}
+          <UploadFileModal
+            isOpen={isUploadFileModalOpen}
+            onClose={() => setIsUploadFileModalOpen(false)}
+            subjectId={Number(subjectId)}
+            onUploadSuccess={() => {
+              // A invalidação das queries já é feita automaticamente pela mutation
+            }}
+          />
+
+          {/* Update Subject Modal */}
+          <UpdateSubjectModal
+            isOpen={isUpdateSubjectModalOpen}
+            onClose={() => setIsUpdateSubjectModalOpen(false)}
+            subject={subject || null}
+          />
+
+          {/* Confirm Delete Subject Modal */}
+          <ConfirmDeleteSubjectModal
+            isOpen={isDeleteSubjectModalOpen}
+            onClose={() => setIsDeleteSubjectModalOpen(false)}
+            onConfirm={confirmDeleteSubject}
+            subject={subject || null}
+            isDeleting={deleteSubjectMutation.isPending}
           />
         </div>
     );

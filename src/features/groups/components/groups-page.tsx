@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
+import { useQueries } from '@tanstack/react-query';
 import { useGroupQueries } from '../services';
-import { useSubjectQueries } from '../../subjects/services';
 import { useGroupMutations } from '../services';
 import { CreateGroupModal } from './create-group-modal';
 import { UpdateGroupModal } from './update-group-modal';
@@ -9,29 +9,51 @@ import { ConfirmDeleteGroupModal } from './confirm-delete-group-modal';
 import { toast } from 'sonner';
 import { PlusIcon, Users, BookOpen, Eye, Edit, Trash2 } from 'lucide-react';
 import type { GroupDTO } from '../types/group';
+import { subjectsApi } from '../../subjects/types/subject';
 
 export function Grupos() {
   const navigate = useNavigate();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
   const [groupToEdit, setGroupToEdit] = useState<GroupDTO | null>(null);
   const [groupToDelete, setGroupToDelete] = useState<GroupDTO | null>(null);
 
 
 
   const { useGetGroups } = useGroupQueries();
-  const { useGetSubjects } = useSubjectQueries();
   const { useDeleteGroupMutation } = useGroupMutations();
   
   const { data: groups = [], isLoading, error } = useGetGroups();
-  const { data: subjects = [] } = useGetSubjects();
   const deleteGroupMutation = useDeleteGroupMutation();
+
+  // Busca subjects de todos os grupos em paralelo
+  const subjectsQueries = useQueries({
+    queries: groups.map((group) => ({
+      queryKey: ['subjects', 'by-group', group.id],
+      queryFn: () => subjectsApi.getSubjectsByGroup(group.id),
+      enabled: !!group.id,
+    })),
+  });
+
+  // Mapa de contagem de subjects por grupo (otimizado com useMemo)
+  const subjectCountByGroup = useMemo(() => {
+    const countMap = new Map<number, number>();
+    
+    // Conta os subjects de cada grupo baseado nas queries
+    subjectsQueries.forEach((query, index) => {
+      const group = groups[index];
+      if (group && query.data) {
+        countMap.set(group.id, query.data.length);
+      }
+    });
+    
+    return countMap;
+  }, [subjectsQueries, groups]);
 
   // Função para contar matérias por grupo
   const getSubjectCountByGroup = (groupId: number) => {
-    return subjects.filter(subject => subject.group?.id === groupId).length;
+    return subjectCountByGroup.get(groupId) || 0;
   };
 
   const handleDeleteGroup = (group: GroupDTO) => {
@@ -39,6 +61,7 @@ export function Grupos() {
     setIsDeleteModalOpen(true);
   };
 
+  
   const confirmDeleteGroup = async () => {
     if (!groupToDelete) return;
 
@@ -137,9 +160,7 @@ export function Grupos() {
                 return (
                   <div 
                     key={group.id}
-                    className={`bg-white border rounded-lg p-6 hover:shadow-md transition-all duration-200 cursor-pointer ${
-                      selectedGroupId === group.id ? 'ring-2 ring-academo-brown border-academo-brown' : 'border-gray-200'
-                    }`}
+                    className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all duration-200 cursor-pointer"
                     onClick={() => handleViewGroup(group.id)}
                   >
                     {/* Card Header */}
@@ -181,13 +202,13 @@ export function Grupos() {
                       </p>
 
                       {/* Subject Count */}
-                      <div className="flex items-center space-x-2 text-sm text-gray-500">
-                        <BookOpen className="w-4 h-4" />
-                        <span>
-                          {subjectCount > 0 
-                            ? `${subjectCount} matéria${subjectCount !== 1 ? 's' : ''}`
-                            : 'Nenhuma matéria'
-                          }
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2 text-sm text-gray-500">
+                          <BookOpen className="w-4 h-4" />
+                          <span>Matérias</span>
+                        </div>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          {subjectCount}
                         </span>
                       </div>
 
