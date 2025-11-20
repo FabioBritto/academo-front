@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Upload, X } from 'lucide-react';
+import { Upload, X, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useFileMutations } from '../services/file';
 
@@ -169,11 +169,6 @@ export function UploadFileModal({ isOpen, onClose, subjectId, onUploadSuccess }:
                 />
                 {selectedFile ? (
                   <div className="space-y-2">
-                    <Upload className="w-12 h-12 text-academo-brown mx-auto" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">{selectedFile.name}</p>
-                      <p className="text-xs text-gray-500 mt-1">{formatFileSize(selectedFile.size)}</p>
-                    </div>
                     <button
                       type="button"
                       onClick={(e) => {
@@ -181,10 +176,15 @@ export function UploadFileModal({ isOpen, onClose, subjectId, onUploadSuccess }:
                         handleRemoveFile();
                       }}
                       disabled={uploadFileMutation.isPending}
-                      className="text-sm text-red-600 hover:text-red-700 disabled:opacity-50"
+                      className="mx-auto p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Remover arquivo"
                     >
-                      Remover arquivo
+                      <Trash2 className="w-12 h-12" />
                     </button>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{selectedFile.name}</p>
+                      <p className="text-xs text-gray-500 mt-1">{formatFileSize(selectedFile.size)}</p>
+                    </div>
                   </div>
                 ) : (
                   <div className="space-y-2">
