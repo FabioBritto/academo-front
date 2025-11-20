@@ -50,6 +50,8 @@ export const useFileMutations = () => {
                 queryClient.invalidateQueries({ queryKey: ['files'] });
                 // Invalida também as queries de arquivos por subject
                 queryClient.invalidateQueries({ queryKey: ['files', 'subject', variables.subjectId] });
+                // Invalida a query de profile para atualizar o uso do storage
+                queryClient.invalidateQueries({ queryKey: ['profile'] });
             },
             onError: (error) => {
                 console.error('Erro ao fazer upload do arquivo:', error);
@@ -68,6 +70,8 @@ export const useFileMutations = () => {
                 // Invalida todas as queries de arquivos e remove a query do arquivo específico
                 queryClient.invalidateQueries({ queryKey: ['files'] });
                 queryClient.removeQueries({ queryKey: ['file', uuid] });
+                // Invalida a query de profile para atualizar o uso do storage
+                queryClient.invalidateQueries({ queryKey: ['profile'] });
             },
             onError: (error) => {
                 return `Não foi possível deletar o arquivo: ${error.message}`;
