@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import academoLogo from '../../assets/academo-logo.jpeg';
+import academoLogo from '../../assets/academo-logo.png';
 import { CreateUserModal } from './CreateUserModal';
 import { LoginModal } from './LoginModal';
 
@@ -72,9 +72,6 @@ const Landing: React.FC = () => {
                 className="bg-academo-cream text-academo-brown hover:bg-white px-8 py-3 rounded-lg font-bold text-lg transition duration-300"
               >
                 Comece a se Organizar Agora
-              </button>
-              <button className="border-2 border-white text-white hover:bg-academo-cream hover:text-academo-brown px-8 py-3 rounded-lg font-bold text-lg transition duration-300">
-                Veja como Funciona
               </button>
             </div>
           </div>
@@ -348,8 +345,8 @@ const Landing: React.FC = () => {
               </div>
               <div className="mt-6">
                 <p className="text-gray-400 mb-2">Entre em contato:</p>
-                <a href="mailto:contato@academo.com" className="text-indigo-400 hover:text-indigo-300">
-                  contato@academo.com
+                <a href="mailto:academo.contato@gmail.com" className="text-indigo-400 hover:text-indigo-300">
+                  academo.contato@gmail.com
                 </a>
               </div>
             </div>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import academoLogo from '../../assets/academo-logo.jpeg';
+import academoLogo from '../../assets/academo-logo.png';
 import { useNavigate } from '@tanstack/react-router';
 import { useUserMutations } from '../../features/auth/services/user';
 

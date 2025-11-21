@@ -1,7 +1,7 @@
 import { useNavigate, useLocation } from "@tanstack/react-router";
 import { Activity, Book, Group, Home, LogOut } from "lucide-react";
 import { useState } from "react";
-import academoLogo from '../../../assets/academo-logo.jpeg';
+import academoLogo from '../../../assets/academo-logo.png';
 import { useAuthStore } from '../../../features/auth/hooks/use-auth-store';
 
 const menuItems = [
