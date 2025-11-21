@@ -1,5 +1,5 @@
 import { Outlet } from '@tanstack/react-router';
-import academoLogo from '../../assets/academo-logo.jpeg'
+import academoLogo from '../../assets/academo-logo.png'
 import { useState } from 'react';
 import { CreateUserModal } from '../../pages/landing/CreateUserModal';
 import { LoginModal } from '../../pages/landing/LoginModal';
