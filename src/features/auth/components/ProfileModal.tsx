@@ -15,10 +15,16 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
 
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    fullName: "",
+    firstName: "",
+    lastName: "",
     institution: "",
     gender: "",
     birthDate: "",
+  });
+  const [errors, setErrors] = useState({
+    firstName: "",
+    lastName: "",
+    institution: "",
   });
 
   // Função para converter M/F para texto exibido
@@ -28,11 +34,22 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
     return gender || "Não informado";
   };
 
+  // Função para separar o fullName em firstName e lastName
+  const splitFullName = (fullName: string): { firstName: string; lastName: string } => {
+    if (!fullName) return { firstName: "", lastName: "" };
+    const parts = fullName.trim().split(' ');
+    const firstName = parts[0] || "";
+    const lastName = parts.slice(1).join(' ') || "";
+    return { firstName, lastName };
+  };
+
   // Preenche o formulário quando o perfil carrega
   useEffect(() => {
     if (profile) {
+      const { firstName, lastName } = splitFullName(profile.fullName || "");
       setFormData({
-        fullName: profile.fullName || "",
+        firstName,
+        lastName,
         institution: profile.institution || "",
         gender: profile.gender || "",
         birthDate: profile.birthDate 
@@ -64,8 +81,10 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
   const handleCancel = () => {
     // Restaura os dados originais do perfil
     if (profile) {
+      const { firstName, lastName } = splitFullName(profile.fullName || "");
       setFormData({
-        fullName: profile.fullName || "",
+        firstName,
+        lastName,
         institution: profile.institution || "",
         gender: profile.gender || "",
         birthDate: profile.birthDate 
@@ -73,15 +92,46 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
           : "",
       });
     }
+    setErrors({ firstName: "", lastName: "", institution: "" });
     setIsEditing(false);
   };
 
   const handleSave = async () => {
+    // Validação de limites
+    const newErrors = {
+      firstName: "",
+      lastName: "",
+      institution: "",
+    };
+
+    if (formData.firstName.length > 20) {
+      newErrors.firstName = "O primeiro nome deve ter no máximo 20 caracteres";
+    }
+    if (formData.lastName.length > 50) {
+      newErrors.lastName = "O sobrenome deve ter no máximo 50 caracteres";
+    }
+    if (formData.institution.length > 80) {
+      newErrors.institution = "A instituição deve ter no máximo 80 caracteres";
+    }
+
+    setErrors(newErrors);
+
+    // Se houver erros, não salva
+    if (newErrors.firstName || newErrors.lastName || newErrors.institution) {
+      return;
+    }
+
     try {
       const payload: any = {};
       
-      if (formData.fullName) payload.fullName = formData.fullName;
-      if (formData.institution) payload.institution = formData.institution;
+      // Concatena firstName e lastName para formar fullName
+      const firstName = formData.firstName.trim();
+      const lastName = formData.lastName.trim();
+      if (firstName || lastName) {
+        payload.fullName = [firstName, lastName].filter(Boolean).join(' ').trim();
+      }
+      
+      if (formData.institution) payload.institution = formData.institution.trim();
       // Garante que apenas M ou F seja enviado
       if (formData.gender && (formData.gender === "M" || formData.gender === "F")) {
         payload.gender = formData.gender;
@@ -92,13 +142,29 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
 
       await updateProfile.mutateAsync(payload);
       setIsEditing(false);
+      setErrors({ firstName: "", lastName: "", institution: "" });
     } catch (error) {
       console.error("Erro ao salvar perfil:", error);
     }
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    // Limita o tamanho do input conforme o campo
+    let limitedValue = value;
+    if (field === "firstName" && value.length > 20) {
+      limitedValue = value.slice(0, 20);
+    } else if (field === "lastName" && value.length > 50) {
+      limitedValue = value.slice(0, 50);
+    } else if (field === "institution" && value.length > 80) {
+      limitedValue = value.slice(0, 80);
+    }
+
+    setFormData(prev => ({ ...prev, [field]: limitedValue }));
+    
+    // Limpa o erro quando o usuário começa a digitar
+    if (errors[field as keyof typeof errors]) {
+      setErrors(prev => ({ ...prev, [field]: "" }));
+    }
   };
 
   return (
@@ -138,42 +204,99 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
               <div className="flex justify-center mb-6">
                 <div className="w-20 h-20 bg-academo-brown rounded-full flex items-center justify-center">
                   <span className="text-white text-3xl font-bold">
-                    {(isEditing ? formData.fullName : profile.fullName)?.[0]?.toUpperCase() || "U"}
+                    {(isEditing ? formData.firstName : profile.fullName?.split(' ')[0])?.[0]?.toUpperCase() || "U"}
                   </span>
                 </div>
               </div>
 
-              {/* Nome Completo */}
-              <div>
-                <label className="text-sm font-medium text-gray-600">Nome Completo</label>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    value={formData.fullName}
-                    onChange={(e) => handleInputChange("fullName", e.target.value)}
-                    className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-academo-brown focus:border-transparent"
-                    placeholder="Digite seu nome completo"
-                  />
-                ) : (
-                  <p className="text-lg text-academo-brown font-medium mt-1">
+              {/* Nome Completo - Modo Visualização */}
+              {!isEditing && (
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Nome Completo</label>
+                  <p className="text-lg text-academo-brown font-medium mt-1 break-words whitespace-normal overflow-wrap-anywhere">
                     {profile.fullName || "Não informado"}
                   </p>
-                )}
-              </div>
+                </div>
+              )}
+
+              {/* Primeiro Nome - Modo Edição */}
+              {isEditing && (
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-sm font-medium text-gray-600">Primeiro Nome</label>
+                    <span className="text-xs text-gray-500">
+                      {formData.firstName.length}/20
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    value={formData.firstName}
+                    onChange={(e) => handleInputChange("firstName", e.target.value)}
+                    maxLength={20}
+                    className={`w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-academo-brown focus:border-transparent ${
+                      errors.firstName ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    placeholder="Digite seu primeiro nome"
+                  />
+                  {errors.firstName && (
+                    <p className="mt-1 text-sm text-red-500">{errors.firstName}</p>
+                  )}
+                </div>
+              )}
+
+              {/* Sobrenome - Modo Edição */}
+              {isEditing && (
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-sm font-medium text-gray-600">Sobrenome</label>
+                    <span className="text-xs text-gray-500">
+                      {formData.lastName.length}/50
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    value={formData.lastName}
+                    onChange={(e) => handleInputChange("lastName", e.target.value)}
+                    maxLength={50}
+                    className={`w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-academo-brown focus:border-transparent ${
+                      errors.lastName ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    placeholder="Digite seu sobrenome"
+                  />
+                  {errors.lastName && (
+                    <p className="mt-1 text-sm text-red-500">{errors.lastName}</p>
+                  )}
+                </div>
+              )}
 
               {/* Instituição */}
               <div>
-                <label className="text-sm font-medium text-gray-600">Instituição</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-sm font-medium text-gray-600">Instituição</label>
+                  {isEditing && (
+                    <span className="text-xs text-gray-500">
+                      {formData.institution.length}/80
+                    </span>
+                  )}
+                </div>
                 {isEditing ? (
-                  <input
-                    type="text"
-                    value={formData.institution}
-                    onChange={(e) => handleInputChange("institution", e.target.value)}
-                    className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-academo-brown focus:border-transparent"
-                    placeholder="Digite sua instituição"
-                  />
+                  <>
+                    <input
+                      type="text"
+                      value={formData.institution}
+                      onChange={(e) => handleInputChange("institution", e.target.value)}
+                      maxLength={80}
+                      className={`w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-academo-brown focus:border-transparent ${
+                        errors.institution ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                      placeholder="Digite sua instituição"
+                    />
+                    {errors.institution && (
+                      <p className="mt-1 text-sm text-red-500">{errors.institution}</p>
+                    )}
+                  </>
                 ) : (
-                  <p className="text-lg text-academo-brown font-medium mt-1">
+                  <p className="text-lg text-academo-brown font-medium mt-1 break-words whitespace-normal overflow-wrap-anywhere">
                     {profile.institution || "Não informado"}
                   </p>
                 )}

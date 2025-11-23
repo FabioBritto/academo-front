@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { AppSidebar } from "./app-side-bar";
-import { useAuthStore } from "../../../features/auth/hooks/use-auth-store";
 import { ProfileModal } from "../../../features/auth/components/ProfileModal";
+import { useProfileQueries } from "../../../features/auth/services/profile";
 
 interface HeaderProps {
     children: React.ReactNode;
@@ -10,7 +10,22 @@ interface HeaderProps {
 export function Header({ children }: HeaderProps) {
     const [scrolled, setScrolled] = useState(false);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-    const { user } = useAuthStore();
+    const { useGetProfileQuery } = useProfileQueries();
+    const { data: profile } = useGetProfileQuery();
+
+    // Função para extrair o primeiro nome do fullName
+    const getFirstName = (fullName: string | undefined): string => {
+        if (!fullName) return "Meu Perfil";
+        const firstName = fullName.split(' ')[0];
+        return firstName || "Meu Perfil";
+    };
+
+    // Função para obter a inicial do primeiro nome
+    const getFirstInitial = (fullName: string | undefined): string => {
+        if (!fullName) return "M";
+        const firstName = fullName.split(' ')[0];
+        return firstName?.[0]?.toUpperCase() || "M";
+    };
 
     const handleScroll = useCallback(() => {
         setScrolled(window.scrollY > 10);
@@ -49,11 +64,11 @@ export function Header({ children }: HeaderProps) {
                             >
                                 <div className="w-8 h-8 bg-academo-brown rounded-full flex items-center justify-center">
                                     <span className="text-white text-sm font-medium">
-                                        {user?.username?.[0]?.toUpperCase() || "M"}
+                                        {getFirstInitial(profile?.fullName)}
                                     </span>
                                 </div>
                                 <span className="text-sm font-medium text-academo-brown">
-                                    {user?.username || "Meu Perfil"}
+                                    {getFirstName(profile?.fullName)}
                                 </span>
                             </button>
                         </div>
