@@ -535,9 +535,6 @@ export default function SubjectsDetailsPage() {
                           <div className="text-sm text-gray-900 font-medium">
                             {formatDateTime(activity.activityDate).date}
                           </div>
-                          <div className="text-xs text-gray-500">
-                            {formatDateTime(activity.activityDate).time}
-                          </div>
                         </td>
 
                         {/* Nome */}
@@ -596,10 +593,7 @@ export default function SubjectsDetailsPage() {
                             {activity.notificationDate ? (
                               <>
                                 {formatDateTime(activity.notificationDate).date}
-                                <br />
-                                <span className="text-xs text-gray-500">
-                                  {formatDateTime(activity.notificationDate).time}
-                                </span>
+
                               </>
                             ) : (
                               <span className="text-gray-400 italic text-xs">-</span>

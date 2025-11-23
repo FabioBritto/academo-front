@@ -27,7 +27,8 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
   const [errors, setErrors] = useState({
     activityDate: '',
     notificationDate: '',
-    name: ''
+    name: '',
+    activityTypeId: ''
   });
   
   const [isLoading, setIsLoading] = useState(false);
@@ -44,8 +45,8 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
   
   const isEditMode = !!activityToEdit;
   
-  // Função para formatar data para input datetime-local
-  const formatDateTimeLocal = (date: Date | string | null | undefined): string => {
+  // Função para formatar data para input date (apenas data, sem hora)
+  const formatDate = (date: Date | string | null | undefined): string => {
     if (!date) return '';
     const d = new Date(date);
     if (isNaN(d.getTime())) return '';
@@ -53,10 +54,8 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
-    const hours = String(d.getHours()).padStart(2, '0');
-    const minutes = String(d.getMinutes()).padStart(2, '0');
     
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
+    return `${year}-${month}-${day}`;
   };
 
   // Função para obter a data mínima (dia seguinte)
@@ -64,30 +63,33 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(0, 0, 0, 0);
-    return formatDateTimeLocal(tomorrow);
+    return formatDate(tomorrow);
   };
 
-  // Função para obter a data mínima de notificação (30 minutos a partir de agora)
+  // Função para obter a data mínima de notificação (hoje ou amanhã, dependendo da hora)
   const getMinNotificationDate = (): string => {
-    const minDate = new Date();
-    minDate.setMinutes(minDate.getMinutes() + 30);
-    return formatDateTimeLocal(minDate);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    // Se já passou das 00:00, a data mínima é hoje, senão é hoje também (já que será às 00:00)
+    return formatDate(today);
   };
 
   // Função para verificar se a data da atividade já passou
   const isActivityDatePassed = (): boolean => {
     if (!isEditMode || !activityToEdit) return false;
     const activityDate = new Date(activityToEdit.activityDate);
-    const now = new Date();
-    return activityDate < now;
+    activityDate.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return activityDate < today;
   };
 
   // Carregar dados da atividade quando estiver em modo de edição
   useEffect(() => {
     if (isOpen && activityToEdit) {
       setFormData({
-        activityDate: formatDateTimeLocal(activityToEdit.activityDate),
-        notificationDate: formatDateTimeLocal(activityToEdit.notificationDate),
+        activityDate: formatDate(activityToEdit.activityDate),
+        notificationDate: formatDate(activityToEdit.notificationDate),
         name: activityToEdit.name || '',
         activityTypeId: activityToEdit.activityTypeId 
           ? String(activityToEdit.activityTypeId) 
@@ -115,7 +117,8 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
     const newErrors = {
       activityDate: '',
       notificationDate: '',
-      name: ''
+      name: '',
+      activityTypeId: ''
     };
 
     // Validação de data
@@ -124,6 +127,7 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
     } else if (!isEditMode) {
       // No modo de criação, a data deve ser pelo menos o dia seguinte
       const activityDate = new Date(formData.activityDate);
+      activityDate.setHours(0, 0, 0, 0);
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
       tomorrow.setHours(0, 0, 0, 0);
@@ -135,13 +139,18 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
 
     // Validação de data de notificação
     if (formData.notificationDate && formData.activityDate) {
+      // Criar datas apenas com a parte da data (sem hora) para comparação
       const notificationDate = new Date(formData.notificationDate);
-      const activityDate = new Date(formData.activityDate);
-      const minNotificationDate = new Date();
-      minNotificationDate.setMinutes(minNotificationDate.getMinutes() + 30);
+      notificationDate.setHours(0, 0, 0, 0);
       
-      if (notificationDate < minNotificationDate) {
-        newErrors.notificationDate = 'A data de notificação deve ser pelo menos 30 minutos a partir de agora';
+      const activityDate = new Date(formData.activityDate);
+      activityDate.setHours(0, 0, 0, 0);
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (notificationDate < today) {
+        newErrors.notificationDate = 'A data de notificação não pode ser anterior a hoje';
       } else if (notificationDate >= activityDate) {
         newErrors.notificationDate = 'A data de notificação deve ser anterior à data da atividade';
       }
@@ -152,6 +161,11 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
       newErrors.name = 'Nome da atividade é obrigatório';
     } else if (formData.name.trim().length < 1) {
       newErrors.name = 'Nome deve ter pelo menos 1 caracter';
+    }
+
+    // Validação de tipo de atividade
+    if (!formData.activityTypeId.trim()) {
+      newErrors.activityTypeId = 'Tipo de atividade é obrigatório';
     }
 
     setErrors(newErrors);
@@ -172,8 +186,16 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
         // Modo de edição
         const payload = {
           id: activityToEdit.id,
-          activityDate: formData.activityDate ? new Date(formData.activityDate) : undefined,
-          notificationDate: formData.notificationDate ? new Date(formData.notificationDate) : undefined,
+          activityDate: formData.activityDate ? (() => {
+            const date = new Date(formData.activityDate);
+            date.setHours(0, 0, 0, 0);
+            return date;
+          })() : undefined,
+          notificationDate: formData.notificationDate ? (() => {
+            const date = new Date(formData.notificationDate);
+            date.setHours(0, 0, 0, 0);
+            return date;
+          })() : undefined,
           name: formData.name.trim(),
           ActivityTypeId: formData.activityTypeId ? Number(formData.activityTypeId) : undefined,
           value: formData.value ? Number(formData.value) : 0,
@@ -186,8 +208,16 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
       } else {
         // Modo de criação
         const payload = {
-          activityDate: new Date(formData.activityDate),
-          notificationDate: formData.notificationDate ? new Date(formData.notificationDate) : undefined,
+          activityDate: (() => {
+            const date = new Date(formData.activityDate);
+            date.setHours(0, 0, 0, 0);
+            return date;
+          })(),
+          notificationDate: formData.notificationDate ? (() => {
+            const date = new Date(formData.notificationDate);
+            date.setHours(0, 0, 0, 0);
+            return date;
+          })() : undefined,
           name: formData.name.trim(),
           activityTypeId: formData.activityTypeId ? Number(formData.activityTypeId) : undefined,
           value: formData.value ? Number(formData.value) : 0,
@@ -214,6 +244,7 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
     // Validação especial para activityDate - deve ser pelo menos o dia seguinte (apenas no modo de criação)
     if (name === 'activityDate' && value && !isEditMode) {
       const activityDate = new Date(value);
+      activityDate.setHours(0, 0, 0, 0);
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
       tomorrow.setHours(0, 0, 0, 0);
@@ -227,12 +258,16 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
     // Validação especial para notificationDate
     if (name === 'notificationDate' && value && formData.activityDate) {
       const notificationDate = new Date(value);
-      const activityDate = new Date(formData.activityDate);
-      const minNotificationDate = new Date();
-      minNotificationDate.setMinutes(minNotificationDate.getMinutes() + 30);
+      notificationDate.setHours(0, 0, 0, 0);
       
-      if (notificationDate < minNotificationDate) {
-        setErrors(prev => ({ ...prev, notificationDate: 'A data de notificação deve ser pelo menos 30 minutos a partir de agora' }));
+      const activityDate = new Date(formData.activityDate);
+      activityDate.setHours(0, 0, 0, 0);
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (notificationDate < today) {
+        setErrors(prev => ({ ...prev, notificationDate: 'A data de notificação não pode ser anterior a hoje' }));
         return;
       } else if (notificationDate >= activityDate) {
         setErrors(prev => ({ ...prev, notificationDate: 'A data de notificação deve ser anterior à data da atividade' }));
@@ -243,12 +278,16 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
     // Validação especial para activityDate - se mudar, verificar notificationDate
     if (name === 'activityDate' && value && formData.notificationDate) {
       const notificationDate = new Date(formData.notificationDate);
-      const activityDate = new Date(value);
-      const minNotificationDate = new Date();
-      minNotificationDate.setMinutes(minNotificationDate.getMinutes() + 30);
+      notificationDate.setHours(0, 0, 0, 0);
       
-      if (notificationDate < minNotificationDate) {
-        setErrors(prev => ({ ...prev, notificationDate: 'A data de notificação deve ser pelo menos 30 minutos a partir de agora' }));
+      const activityDate = new Date(value);
+      activityDate.setHours(0, 0, 0, 0);
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (notificationDate < today) {
+        setErrors(prev => ({ ...prev, notificationDate: 'A data de notificação não pode ser anterior a hoje' }));
         setFormData(prev => ({ ...prev, [name]: value, notificationDate: '' }));
         return;
       } else if (notificationDate >= activityDate) {
@@ -276,7 +315,7 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
         value: '0',
         description: '' 
       });
-      setErrors({ activityDate: '', notificationDate: '', name: '' });
+      setErrors({ activityDate: '', notificationDate: '', name: '', activityTypeId: '' });
     }
   };
 
@@ -330,7 +369,7 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
                   Data <span className="text-red-500">*</span>
                 </label>
                 <input
-                  type="datetime-local"
+                  type="date"
                   id="activityDate"
                   name="activityDate"
                   value={formData.activityDate}
@@ -364,18 +403,18 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
                   Data de Notificação
                 </label>
                 <input
-                  type="datetime-local"
+                  type="date"
                   id="notificationDate"
                   name="notificationDate"
                   value={formData.notificationDate}
                   onChange={handleInputChange}
                   min={formData.activityDate ? getMinNotificationDate() : undefined}
-                  max={formData.activityDate || undefined}
+                  max={formData.activityDate ? formatDate(formData.activityDate) : undefined}
                   title={isActivityDatePassed()
                     ? 'Não é possível alterar a data de notificação de uma atividade que já aconteceu'
                     : (!formData.activityDate 
                       ? 'Primeiro selecione a data da atividade' 
-                      : 'A data de notificação deve ser entre 30 minutos a partir de agora e a data da atividade')}
+                      : 'A data de notificação deve ser anterior à data da atividade')}
                   className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-academo-brown ${
                     errors.notificationDate 
                       ? 'border-red-500' 
@@ -388,6 +427,9 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
                 {errors.notificationDate && (
                   <p className="mt-1 text-sm text-red-500">{errors.notificationDate}</p>
                 )}
+                <p className="mt-1 text-xs text-gray-500">
+                  A notificação será enviada no dia escolhido às 00:00
+                </p>
               </div>
 
               {/* Nome */}
@@ -415,7 +457,7 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
               {/* Tipo de Atividade */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Tipo de Atividade
+                  Tipo de Atividade <span className="text-red-500">*</span>
                 </label>
                 <div>
                   <button
@@ -423,7 +465,9 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
                     onClick={() => setIsSelectTypeModalOpen(true)}
                     disabled={isLoading}
                     className={`w-full px-4 py-3 text-left border-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                      formData.activityTypeId
+                      errors.activityTypeId
+                        ? 'border-red-500 bg-red-50'
+                        : formData.activityTypeId
                         ? 'border-academo-brown bg-academo-brown/5 hover:bg-academo-brown/10'
                         : 'border-gray-300 bg-white hover:bg-gray-50'
                     }`}
@@ -463,6 +507,9 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
                     </div>
                   </button>
                 </div>
+                {errors.activityTypeId && (
+                  <p className="mt-1 text-sm text-red-500">{errors.activityTypeId}</p>
+                )}
               </div>
 
               {/* Valor */}
@@ -587,6 +634,10 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
         onClose={() => setIsSelectTypeModalOpen(false)}
         onSelect={(typeId) => {
           setFormData(prev => ({ ...prev, activityTypeId: typeId ? String(typeId) : '' }));
+          // Limpar erro quando um tipo for selecionado
+          if (typeId && errors.activityTypeId) {
+            setErrors(prev => ({ ...prev, activityTypeId: '' }));
+          }
         }}
         selectedTypeId={formData.activityTypeId ? Number(formData.activityTypeId) : undefined}
       />
