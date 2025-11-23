@@ -33,6 +33,8 @@ export function CreateTypeActivityModal({ isOpen, onClose, onSuccess }: CreateTy
       newErrors.name = 'Nome do tipo de atividade é obrigatório';
     } else if (formData.name.trim().length < 3) {
       newErrors.name = 'Nome deve ter pelo menos 3 caracteres';
+    } else if (formData.name.trim().length > 60) {
+      newErrors.name = 'Nome deve ter no máximo 60 caracteres';
     }
 
     setErrors(newErrors);
@@ -71,7 +73,14 @@ export function CreateTypeActivityModal({ isOpen, onClose, onSuccess }: CreateTy
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Limita o tamanho do input conforme o campo
+    let limitedValue = value;
+    if (name === "name" && value.length > 60) {
+      limitedValue = value.slice(0, 60);
+    }
+    
+    setFormData(prev => ({ ...prev, [name]: limitedValue }));
     
     if (errors[name as keyof typeof errors]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
@@ -128,15 +137,21 @@ export function CreateTypeActivityModal({ isOpen, onClose, onSuccess }: CreateTy
             <div className="space-y-4">
               {/* Nome */}
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                  Nome <span className="text-red-500">*</span>
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                    Nome <span className="text-red-500">*</span>
+                  </label>
+                  <span className="text-xs text-gray-500">
+                    {formData.name.length}/60
+                  </span>
+                </div>
                 <input
                   type="text"
                   id="name"
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
+                  maxLength={60}
                   className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-academo-brown ${
                     errors.name ? 'border-red-500' : 'border-gray-300'
                   }`}

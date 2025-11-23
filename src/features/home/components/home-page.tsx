@@ -8,6 +8,7 @@ import { subjectsApi } from '../../subjects/types/subject';
 import { CreateGroupModal } from '../../groups/components/create-group-modal';
 import { CreateActivityModal } from '../../activities/components/create-activity-modal';
 import { CreateSubjectModal } from '../../subjects/components/create-subject-modal';
+import { formatDateTime } from '../../../shared/utils/formatter';
 
 // Cores para os grupos (cicla entre as cores)
 const groupColors = [
@@ -117,10 +118,13 @@ export function Home() {
         const now = new Date();
         const isCompleted = activityDate < now;
 
+        // Garantir que o nome da matéria seja exibido corretamente
+        const subjectName = activity.subjectName?.trim() || 'Sem matéria';
+
         return {
           id: activity.id,
           name: activity.name,
-          subject: activity.subject || 'Sem matéria',
+          subject: subjectName,
           date: activity.activityDate,
           status: isCompleted ? 'completed' : 'pending',
         };
@@ -441,7 +445,7 @@ export function Home() {
                         <td className="py-3 px-4 font-medium text-gray-900">{activity.name}</td>
                         <td className="py-3 px-4 text-gray-600">{activity.subject}</td>
                         <td className="py-3 px-4 text-gray-600">
-                          {new Date(activity.date).toLocaleDateString('pt-BR')}
+                          {formatDateTime(activity.date).date}
                         </td>
                         <td className="py-3 px-4">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${

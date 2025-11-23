@@ -167,6 +167,8 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
       newErrors.name = 'Nome da atividade é obrigatório';
     } else if (formData.name.trim().length < 1) {
       newErrors.name = 'Nome deve ter pelo menos 1 caracter';
+    } else if (formData.name.trim().length > 60) {
+      newErrors.name = 'Nome deve ter no máximo 60 caracteres';
     }
 
     // Validação de tipo de atividade
@@ -231,13 +233,19 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     
+    // Limita o tamanho do input conforme o campo
+    let limitedValue = value;
+    if (name === "name" && value.length > 60) {
+      limitedValue = value.slice(0, 60);
+    }
+    
     // Validação especial para activityDate - deve ser pelo menos o dia seguinte
     // (tanto em criação quanto em edição, se a atividade ainda não passou)
-    if (name === 'activityDate' && value) {
+    if (name === 'activityDate' && limitedValue) {
       const shouldValidateMinDate = !isEditMode || !isActivityDatePassed();
       
       if (shouldValidateMinDate) {
-        const activityDate = parseDateString(value);
+        const activityDate = parseDateString(limitedValue);
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
         tomorrow.setHours(0, 0, 0, 0);
@@ -250,8 +258,8 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
     }
     
     // Validação especial para notificationDate
-    if (name === 'notificationDate' && value && formData.activityDate) {
-      const notificationDate = parseDateString(value);
+    if (name === 'notificationDate' && limitedValue && formData.activityDate) {
+      const notificationDate = parseDateString(limitedValue);
       const activityDate = parseDateString(formData.activityDate);
       
       const today = new Date();
@@ -267,25 +275,25 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
     }
     
     // Validação especial para activityDate - se mudar, verificar notificationDate
-    if (name === 'activityDate' && value && formData.notificationDate) {
+    if (name === 'activityDate' && limitedValue && formData.notificationDate) {
       const notificationDate = parseDateString(formData.notificationDate);
-      const activityDate = parseDateString(value);
+      const activityDate = parseDateString(limitedValue);
       
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       
       if (notificationDate < today) {
         setErrors(prev => ({ ...prev, notificationDate: 'A data de notificação não pode ser anterior a hoje' }));
-        setFormData(prev => ({ ...prev, [name]: value, notificationDate: '' }));
+        setFormData(prev => ({ ...prev, [name]: limitedValue, notificationDate: '' }));
         return;
       } else if (notificationDate >= activityDate) {
         setErrors(prev => ({ ...prev, notificationDate: 'A data de notificação deve ser anterior à data da atividade' }));
-        setFormData(prev => ({ ...prev, [name]: value, notificationDate: '' }));
+        setFormData(prev => ({ ...prev, [name]: limitedValue, notificationDate: '' }));
         return;
       }
     }
     
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: limitedValue }));
     
     if (errors[name as keyof typeof errors]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
@@ -422,15 +430,21 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
 
               {/* Nome */}
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                  Nome <span className="text-red-500">*</span>
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                    Nome <span className="text-red-500">*</span>
+                  </label>
+                  <span className="text-xs text-gray-500">
+                    {formData.name.length}/60
+                  </span>
+                </div>
                 <input
                   type="text"
                   id="name"
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
+                  maxLength={60}
                   className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-academo-brown ${
                     errors.name ? 'border-red-500' : 'border-gray-300'
                   }`}

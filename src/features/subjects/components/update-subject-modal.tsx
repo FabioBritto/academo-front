@@ -50,6 +50,8 @@ export function UpdateSubjectModal({ isOpen, onClose, subject }: UpdateSubjectMo
       newErrors.name = 'Nome da matéria é obrigatório';
     } else if (formData.name.trim().length < 3) {
       newErrors.name = 'Nome deve ter pelo menos 3 caracteres';
+    } else if (formData.name.trim().length > 60) {
+      newErrors.name = 'Nome deve ter no máximo 60 caracteres';
     }
 
     setErrors(newErrors);
@@ -88,7 +90,13 @@ export function UpdateSubjectModal({ isOpen, onClose, subject }: UpdateSubjectMo
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     
-    setFormData(prev => ({ ...prev, [name]: value }));
+    // Limita o tamanho do input conforme o campo
+    let limitedValue = value;
+    if (name === "name" && value.length > 60) {
+      limitedValue = value.slice(0, 60);
+    }
+    
+    setFormData(prev => ({ ...prev, [name]: limitedValue }));
     
     if (errors[name as keyof typeof errors]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
@@ -145,9 +153,14 @@ export function UpdateSubjectModal({ isOpen, onClose, subject }: UpdateSubjectMo
           <form onSubmit={handleSubmit} className="px-6 py-6">
             {/* Nome da Matéria */}
             <div className="mb-4">
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                Nome da Matéria *
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                  Nome da Matéria *
+                </label>
+                <span className="text-xs text-gray-500">
+                  {formData.name.length}/60
+                </span>
+              </div>
               <input
                 type="text"
                 id="name"
@@ -159,7 +172,7 @@ export function UpdateSubjectModal({ isOpen, onClose, subject }: UpdateSubjectMo
                 }`}
                 placeholder="Ex: Matemática"
                 disabled={isLoading}
-                maxLength={100}
+                maxLength={60}
               />
               {errors.name && (
                 <p className="mt-1 text-sm text-red-600">{errors.name}</p>
