@@ -58,6 +58,13 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
     return `${year}-${month}-${day}`;
   };
 
+  // Função para criar Date a partir de string YYYY-MM-DD no timezone local
+  const parseDateString = (dateString: string): Date => {
+    // Parse da string YYYY-MM-DD e criar Date no timezone local
+    const [year, month, day] = dateString.split('-').map(Number);
+    return new Date(year, month - 1, day, 0, 0, 0, 0);
+  };
+
   // Função para obter a data mínima (dia seguinte)
   const getMinDate = (): string => {
     const tomorrow = new Date();
@@ -126,8 +133,7 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
       newErrors.activityDate = 'Data é obrigatória';
     } else if (!isEditMode) {
       // No modo de criação, a data deve ser pelo menos o dia seguinte
-      const activityDate = new Date(formData.activityDate);
-      activityDate.setHours(0, 0, 0, 0);
+      const activityDate = parseDateString(formData.activityDate);
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
       tomorrow.setHours(0, 0, 0, 0);
@@ -140,11 +146,8 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
     // Validação de data de notificação
     if (formData.notificationDate && formData.activityDate) {
       // Criar datas apenas com a parte da data (sem hora) para comparação
-      const notificationDate = new Date(formData.notificationDate);
-      notificationDate.setHours(0, 0, 0, 0);
-      
-      const activityDate = new Date(formData.activityDate);
-      activityDate.setHours(0, 0, 0, 0);
+      const notificationDate = parseDateString(formData.notificationDate);
+      const activityDate = parseDateString(formData.activityDate);
       
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -186,16 +189,8 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
         // Modo de edição
         const payload = {
           id: activityToEdit.id,
-          activityDate: formData.activityDate ? (() => {
-            const date = new Date(formData.activityDate);
-            date.setHours(0, 0, 0, 0);
-            return date;
-          })() : undefined,
-          notificationDate: formData.notificationDate ? (() => {
-            const date = new Date(formData.notificationDate);
-            date.setHours(0, 0, 0, 0);
-            return date;
-          })() : undefined,
+          activityDate: formData.activityDate ? parseDateString(formData.activityDate) : undefined,
+          notificationDate: formData.notificationDate ? parseDateString(formData.notificationDate) : undefined,
           name: formData.name.trim(),
           ActivityTypeId: formData.activityTypeId ? Number(formData.activityTypeId) : undefined,
           value: formData.value ? Number(formData.value) : 0,
@@ -208,16 +203,8 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
       } else {
         // Modo de criação
         const payload = {
-          activityDate: (() => {
-            const date = new Date(formData.activityDate);
-            date.setHours(0, 0, 0, 0);
-            return date;
-          })(),
-          notificationDate: formData.notificationDate ? (() => {
-            const date = new Date(formData.notificationDate);
-            date.setHours(0, 0, 0, 0);
-            return date;
-          })() : undefined,
+          activityDate: parseDateString(formData.activityDate),
+          notificationDate: formData.notificationDate ? parseDateString(formData.notificationDate) : undefined,
           name: formData.name.trim(),
           activityTypeId: formData.activityTypeId ? Number(formData.activityTypeId) : undefined,
           value: formData.value ? Number(formData.value) : 0,
@@ -243,8 +230,7 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
     
     // Validação especial para activityDate - deve ser pelo menos o dia seguinte (apenas no modo de criação)
     if (name === 'activityDate' && value && !isEditMode) {
-      const activityDate = new Date(value);
-      activityDate.setHours(0, 0, 0, 0);
+      const activityDate = parseDateString(value);
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
       tomorrow.setHours(0, 0, 0, 0);
@@ -257,11 +243,8 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
     
     // Validação especial para notificationDate
     if (name === 'notificationDate' && value && formData.activityDate) {
-      const notificationDate = new Date(value);
-      notificationDate.setHours(0, 0, 0, 0);
-      
-      const activityDate = new Date(formData.activityDate);
-      activityDate.setHours(0, 0, 0, 0);
+      const notificationDate = parseDateString(value);
+      const activityDate = parseDateString(formData.activityDate);
       
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -277,11 +260,8 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
     
     // Validação especial para activityDate - se mudar, verificar notificationDate
     if (name === 'activityDate' && value && formData.notificationDate) {
-      const notificationDate = new Date(formData.notificationDate);
-      notificationDate.setHours(0, 0, 0, 0);
-      
-      const activityDate = new Date(value);
-      activityDate.setHours(0, 0, 0, 0);
+      const notificationDate = parseDateString(formData.notificationDate);
+      const activityDate = parseDateString(value);
       
       const today = new Date();
       today.setHours(0, 0, 0, 0);
