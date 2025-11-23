@@ -30,6 +30,10 @@ export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalPro
   const { useCreateUserMutation } = useUserMutations();
   const createUserMutation = useCreateUserMutation();
 
+  // Caracteres proibidos no nome de usuário
+  const forbiddenCharsRegex = /[\s'"\/\\?&<>]/;
+  const forbiddenCharsPattern = /[\s'"\/\\?&<>\n\t]/g;
+
   const validateForm = () => {
     const newErrors = {
       name: '',
@@ -37,6 +41,13 @@ export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalPro
       password: '',
       confirmPassword: '',
     };
+
+    // Validação de nome de usuário
+    if (!formData.name) {
+      newErrors.name = 'Nome de usuário é obrigatório';
+    } else if (forbiddenCharsRegex.test(formData.name)) {
+      newErrors.name = 'Nome de usuário não pode conter espaços, aspas, barras, ou caracteres especiais (/\'"?&<>)';
+    }
 
     // Validação de email
     if (!formData.email) {
@@ -48,8 +59,22 @@ export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalPro
     // Validação de senha
     if (!formData.password) {
       newErrors.password = 'Senha é obrigatória';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Senha deve ter pelo menos 6 caracteres';
+    } else {
+      const password = formData.password;
+      
+      if (password.length < 8) {
+        newErrors.password = 'Senha deve ter pelo menos 8 caracteres';
+      } else if (password.length > 72) {
+        newErrors.password = 'Senha deve ter no máximo 72 caracteres';
+      } else if (!/[A-Z]/.test(password)) {
+        newErrors.password = 'Senha deve conter pelo menos uma letra maiúscula';
+      } else if (!/[a-z]/.test(password)) {
+        newErrors.password = 'Senha deve conter pelo menos uma letra minúscula';
+      } else if (!/[0-9]/.test(password)) {
+        newErrors.password = 'Senha deve conter pelo menos um número';
+      } else if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+        newErrors.password = 'Senha deve conter pelo menos um caractere especial';
+      }
     }
 
     // Validação de confirmação de senha
@@ -108,7 +133,9 @@ export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalPro
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    // Remove caracteres proibidos automaticamente do nome de usuário
+    const processedValue = name === 'name' ? value.replace(forbiddenCharsPattern, '') : value;
+    setFormData(prev => ({ ...prev, [name]: processedValue }));
     
     if (errors[name as keyof typeof errors]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
@@ -240,7 +267,7 @@ export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalPro
 
             <div className="mb-4">
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                Nome
+                 Nome de Usuário
               </label>
               <input
                 type="text"
@@ -251,12 +278,15 @@ export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalPro
                 className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-academo-brown focus:border-academo-brown ${
                   errors.name ? 'border-red-500' : 'border-gray-300'
                 }`}
-                placeholder="Nome"
+                placeholder="Nome de Usuário"
                 disabled={isLoading}
               />
               {errors.name && (
                 <p className="mt-1 text-sm text-red-600">{errors.name}</p>
               )}
+              <p className="mt-1 text-xs text-gray-500">
+                Não são permitidos: espaços, aspas (' "), barras (/ \), e caracteres especiais (? & {'<'} {'>'})
+              </p>
             </div>
             {/* Email */}
             <div className="mb-4">
@@ -319,6 +349,9 @@ export function CreateUserModal({ isOpen, onClose, onLogin }: CreateUserModalPro
               {errors.password && (
                 <p className="mt-1 text-sm text-red-600">{errors.password}</p>
               )}
+              <p className="mt-1 text-xs text-gray-500">
+                A senha deve ter entre 8 e 72 caracteres, contendo letras maiúsculas, minúsculas, números e caracteres especiais
+              </p>
             </div>
 
             {/* Confirmação de Senha */}

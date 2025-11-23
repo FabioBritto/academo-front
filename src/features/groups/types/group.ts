@@ -26,6 +26,7 @@ export interface UpdateGroupDTO {
     name?: string;
     description?: string;
     isActive?: boolean;
+    subjectsId?: number[];
 }
 
 export interface RemoveSubjectDTO {
@@ -69,7 +70,7 @@ export const groupsApi = {
     },
 
     removeSubject: async (payload: RemoveSubjectDTO) => {
-        const response = await api.put<Group>(`/groups/remove-subject`, payload);
+        const response = await api.delete<Group>(`/groups/remove-subject?groupId=${payload.groupId}&subjectId=${payload.subjectId}`);
         return response.data;
     },
 

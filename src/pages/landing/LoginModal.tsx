@@ -89,9 +89,27 @@ export function LoginModal({ isOpen, onClose, onCreateAccount }: LoginModalProps
       const redirectTo = urlParams.get('redirect') || '/app/home';
       navigate({ to: redirectTo });
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao fazer login:', error);
-      toast.error('Erro ao fazer login. Tente novamente.');
+      
+      let errorMsg = 'Erro ao fazer login. Tente novamente.';
+      
+      if (error?.response?.data) {
+        // Se response.data for uma string, usa diretamente
+        if (typeof error.response.data === 'string') {
+          errorMsg = error.response.data;
+        } 
+        // Se response.data for um objeto com mensagem
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+        // Se response.data for um objeto, tenta converter para string
+        else {
+          errorMsg = JSON.stringify(error.response.data);
+        }
+      }
+      
+      toast.error(errorMsg);
     } finally {
       setIsLoading(false);
     }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useGroupMutations } from '../services';
+import { useSubjectQueries } from '../../subjects/services';
 import { toast } from 'sonner';
 import { Switch } from '../../../shared/components/ui/switch';
 import type { GroupDTO } from '../types/group';
@@ -24,7 +25,11 @@ export function UpdateGroupModal({ isOpen, onClose, group }: UpdateGroupModalPro
   
   const [isLoading, setIsLoading] = useState(false);
   const { useUpdateGroupMutation } = useGroupMutations();
+  const { useGetSubjectsByGroup } = useSubjectQueries();
   const updateGroupMutation = useUpdateGroupMutation();
+  
+  // Buscar subjects do grupo quando o modal abrir
+  const { data: groupSubjects = [] } = useGetSubjectsByGroup(group?.id || 0);
 
   // Preencher o formulário quando o grupo mudar
   useEffect(() => {
@@ -48,6 +53,8 @@ export function UpdateGroupModal({ isOpen, onClose, group }: UpdateGroupModalPro
       newErrors.name = 'Nome do grupo é obrigatório';
     } else if (formData.name.trim().length < 3) {
       newErrors.name = 'Nome deve ter pelo menos 3 caracteres';
+    } else if (formData.name.trim().length > 60) {
+      newErrors.name = 'Nome deve ter no máximo 60 caracteres';
     }
 
     setErrors(newErrors);
@@ -64,10 +71,14 @@ export function UpdateGroupModal({ isOpen, onClose, group }: UpdateGroupModalPro
     setIsLoading(true);
     
     try {
+      // Obter os IDs dos subjects associados ao grupo
+      const subjectsId = groupSubjects.map(subject => subject.id);
+      
       const updateGroupDTO = {
         name: formData.name.trim(),
         description: formData.description.trim(),
-        isActive: formData.isActive
+        isActive: formData.isActive,
+        subjectsId: subjectsId
       };
       
       await updateGroupMutation.mutateAsync({
@@ -87,7 +98,14 @@ export function UpdateGroupModal({ isOpen, onClose, group }: UpdateGroupModalPro
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Limita o tamanho do input conforme o campo
+    let limitedValue = value;
+    if (name === "name" && value.length > 60) {
+      limitedValue = value.slice(0, 60);
+    }
+    
+    setFormData(prev => ({ ...prev, [name]: limitedValue }));
     
     if (errors[name as keyof typeof errors]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
@@ -144,9 +162,14 @@ export function UpdateGroupModal({ isOpen, onClose, group }: UpdateGroupModalPro
           <form onSubmit={handleSubmit} className="px-6 py-6">
             {/* Nome do Grupo */}
             <div className="mb-4">
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                Nome do Grupo *
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                  Nome do Grupo *
+                </label>
+                <span className="text-xs text-gray-500">
+                  {formData.name.length}/60
+                </span>
+              </div>
               <input
                 type="text"
                 id="name"
@@ -158,7 +181,7 @@ export function UpdateGroupModal({ isOpen, onClose, group }: UpdateGroupModalPro
                 }`}
                 placeholder="Ex: Estudo de Matemática"
                 disabled={isLoading}
-                maxLength={100}
+                maxLength={60}
               />
               {errors.name && (
                 <p className="mt-1 text-sm text-red-600">{errors.name}</p>

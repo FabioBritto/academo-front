@@ -61,6 +61,10 @@ export function GroupDetails() {
     setIsRemoveSubjectModalOpen(true);
   };
 
+  const handleSubjectClick = (subjectId: number) => {
+    navigate({ to: '/app/materias/$subjectId', params: { subjectId: String(subjectId) } });
+  };
+
   const confirmRemoveSubject = async () => {
     if (!subjectToRemove || !group) return;
 
@@ -296,7 +300,8 @@ export function GroupDetails() {
                 {subjects.map((subject) => (
                   <tr 
                     key={subject.id}
-                    className="hover:bg-gray-50 transition-all duration-200 group"
+                    onClick={() => handleSubjectClick(subject.id)}
+                    className="hover:bg-gray-50 transition-all duration-200 group cursor-pointer"
                   >
                     {/* Nome */}
                     <td className="px-6 py-4">
@@ -344,7 +349,7 @@ export function GroupDetails() {
                     </td>
 
                     {/* Ações */}
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                       <div className="flex justify-center space-x-2">    
                         <button
                           onClick={() => handleRemoveSubject(subject)}
