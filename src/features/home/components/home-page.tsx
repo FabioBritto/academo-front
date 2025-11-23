@@ -7,9 +7,8 @@ import { useActivityQueries } from '../../activities/services/activity';
 import { subjectsApi } from '../../subjects/types/subject';
 import { CreateGroupModal } from '../../groups/components/create-group-modal';
 import { CreateActivityModal } from '../../activities/components/create-activity-modal';
-import type { ActivityDTO } from '../../activities/types/activity';
-import type { GroupDTO } from '../../groups/types/group';
-import type { Subject } from '../../subjects/types/subject';
+import { CreateSubjectModal } from '../../subjects/components/create-subject-modal';
+import { formatDateTime } from '../../../shared/utils/formatter';
 
 // Cores para os grupos (cicla entre as cores)
 const groupColors = [
@@ -27,6 +26,7 @@ export function Home() {
   const navigate = useNavigate();
   const [isCreateGroupModalOpen, setIsCreateGroupModalOpen] = useState(false);
   const [isCreateActivityModalOpen, setIsCreateActivityModalOpen] = useState(false);
+  const [isCreateSubjectModalOpen, setIsCreateSubjectModalOpen] = useState(false);
   const [isSubjectDropdownOpen, setIsSubjectDropdownOpen] = useState(false);
   const [selectedSubjectId, setSelectedSubjectId] = useState<number | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -118,10 +118,13 @@ export function Home() {
         const now = new Date();
         const isCompleted = activityDate < now;
 
+        // Garantir que o nome da matéria seja exibido corretamente
+        const subjectName = activity.subjectName?.trim() || 'Sem matéria';
+
         return {
           id: activity.id,
           name: activity.name,
-          subject: activity.subject || 'Sem matéria',
+          subject: subjectName,
           date: activity.activityDate,
           status: isCompleted ? 'completed' : 'pending',
         };
@@ -154,7 +157,11 @@ export function Home() {
   };
 
   const handleAddSubject = () => {
-    navigate({ to: '/app/materias' });
+    setIsCreateSubjectModalOpen(true);
+  };
+
+  const handleCloseSubjectModal = () => {
+    setIsCreateSubjectModalOpen(false);
   };
 
   return (
@@ -178,7 +185,7 @@ export function Home() {
                 <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd"/>
               </svg>
             </div>
-            <span className="font-medium text-academo-brown">Criar Grupo</span>
+            <span className="font-medium text-academo-brown">Novo Grupo</span>
           </button>
           
           <button 
@@ -190,7 +197,7 @@ export function Home() {
                 <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd"/>
               </svg>
             </div>
-            <span className="font-medium text-academo-brown">Adicionar Matéria</span>
+            <span className="font-medium text-academo-brown">Nova Matéria</span>
           </button>
           
           <div className="relative" ref={dropdownRef}>
@@ -438,7 +445,7 @@ export function Home() {
                         <td className="py-3 px-4 font-medium text-gray-900">{activity.name}</td>
                         <td className="py-3 px-4 text-gray-600">{activity.subject}</td>
                         <td className="py-3 px-4 text-gray-600">
-                          {new Date(activity.date).toLocaleDateString('pt-BR')}
+                          {formatDateTime(activity.date).date}
                         </td>
                         <td className="py-3 px-4">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -475,6 +482,12 @@ export function Home() {
           subjectId={selectedSubjectId}
         />
       )}
+
+      {/* Create Subject Modal */}
+      <CreateSubjectModal 
+        isOpen={isCreateSubjectModalOpen}
+        onClose={handleCloseSubjectModal}
+      />
     </div>
   );
 }

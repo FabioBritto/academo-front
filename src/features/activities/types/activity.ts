@@ -8,7 +8,7 @@ export interface ActivityDTO {
     activityDate: Date;
     name: string;
     description: string;
-    subject: string | null;
+    subjectName: string | null;
     activityType: string | null;
 }
 
