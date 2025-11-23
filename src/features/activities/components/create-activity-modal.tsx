@@ -131,14 +131,17 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
     // Validação de data
     if (!formData.activityDate.trim()) {
       newErrors.activityDate = 'Data é obrigatória';
-    } else if (!isEditMode) {
-      // No modo de criação, a data deve ser pelo menos o dia seguinte
+    } else {
+      // A data deve ser pelo menos o dia seguinte (tanto em criação quanto em edição, se a atividade ainda não passou)
       const activityDate = parseDateString(formData.activityDate);
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
       tomorrow.setHours(0, 0, 0, 0);
       
-      if (activityDate < tomorrow) {
+      // No modo de edição, só validar se a atividade original ainda não passou
+      const shouldValidateMinDate = !isEditMode || !isActivityDatePassed();
+      
+      if (shouldValidateMinDate && activityDate < tomorrow) {
         newErrors.activityDate = 'A data da atividade deve ser a partir do dia seguinte';
       }
     }
@@ -228,16 +231,21 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     
-    // Validação especial para activityDate - deve ser pelo menos o dia seguinte (apenas no modo de criação)
-    if (name === 'activityDate' && value && !isEditMode) {
-      const activityDate = parseDateString(value);
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      tomorrow.setHours(0, 0, 0, 0);
+    // Validação especial para activityDate - deve ser pelo menos o dia seguinte
+    // (tanto em criação quanto em edição, se a atividade ainda não passou)
+    if (name === 'activityDate' && value) {
+      const shouldValidateMinDate = !isEditMode || !isActivityDatePassed();
       
-      if (activityDate < tomorrow) {
-        setErrors(prev => ({ ...prev, activityDate: 'A data da atividade deve ser a partir do dia seguinte' }));
-        return;
+      if (shouldValidateMinDate) {
+        const activityDate = parseDateString(value);
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(0, 0, 0, 0);
+        
+        if (activityDate < tomorrow) {
+          setErrors(prev => ({ ...prev, activityDate: 'A data da atividade deve ser a partir do dia seguinte' }));
+          return;
+        }
       }
     }
     
@@ -354,10 +362,10 @@ export function CreateActivityModal({ isOpen, onClose, subjectId, activityToEdit
                   name="activityDate"
                   value={formData.activityDate}
                   onChange={handleInputChange}
-                  min={!isEditMode ? getMinDate() : undefined}
+                  min={!isActivityDatePassed() ? getMinDate() : undefined}
                   title={isActivityDatePassed() 
                     ? 'Não é possível alterar a data de uma atividade que já aconteceu' 
-                    : (!isEditMode ? 'A data da atividade deve ser a partir do dia seguinte' : undefined)}
+                    : 'A data da atividade deve ser a partir do dia seguinte'}
                   className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-academo-brown ${
                     errors.activityDate 
                       ? 'border-red-500' 
