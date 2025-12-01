@@ -1,6 +1,7 @@
 import { useProfileQueries, useProfileMutations } from "../services/profile";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { formatDateTime } from "../../../shared/utils/formatter";
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -52,7 +53,7 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
         lastName,
         institution: profile.institution || "",
         gender: profile.gender || "",
-        birthDate: profile.birthDate 
+        birthDate: formatDateTime(profile.birthDate).date
           ? new Date(profile.birthDate).toISOString().split('T')[0]
           : "",
       });

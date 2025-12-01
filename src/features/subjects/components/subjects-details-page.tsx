@@ -655,16 +655,12 @@ export default function SubjectsDetailsPage() {
                               <Calendar className="w-4 h-4" />
                               <span className="font-medium">Data da Atividade:</span>
                               <span>{formatDateTime(selectedActivity.activityDate).date}</span>
-                              <span className="mx-1">•</span>
-                              <span>{formatDateTime(selectedActivity.activityDate).time}</span>
                             </div>
                             {selectedActivity.notificationDate && (
                               <div className="flex items-center gap-2 text-sm text-gray-600">
                                 <Clock className="w-4 h-4" />
                                 <span className="font-medium">Data de Notificação:</span>
                                 <span>{formatDateTime(selectedActivity.notificationDate).date}</span>
-                                <span className="mx-1">•</span>
-                                <span>{formatDateTime(selectedActivity.notificationDate).time}</span>
                               </div>
                             )}
                           </div>
